@@ -234,6 +234,8 @@ Após realizar o login, o usuário é direcionado ao menu principal do sistema A
 A opção Minha área permite acessar funcionalidades relacionadas ao usuário conectado, incluindo seus dados e suas perguntas. A opção Buscar perguntas está presente no menu, porém a busca global não faz parte do escopo implementado nesta etapa do trabalho.
 
 <img width="276" height="195" alt="image" src="https://github.com/user-attachments/assets/d3712a4d-33d7-4620-90a7-0c0a352ea861" />
+
+
 Figura 4 – Menu principal do sistema após o login.
 
 
