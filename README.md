@@ -171,8 +171,6 @@ O vínculo 1:N usa a Árvore B+ de pares `(idUsuario, idPergunta)` (`ParIdId`). 
 
 ## 7. Checklist obrigatório
 
-Respostas conferidas após as correções, com `mvn test` executado em **19/09/2026** (`Tests run: 4, Failures: 0, Errors: 0` e `BUILD SUCCESS`).
-
 ### Há um CRUD de usuários (que estende a classe Arquivo, acrescentando Tabelas Hash Extensíveis e Árvores B+ como índices diretos e indiretos conforme necessidade) que funciona corretamente?
 
 **Sim.** Os usuários são gravados pela classe `Arquivo` do professor, que já traz o índice direto em tabela hash extensível (ID → endereço). O índice indireto por e-mail é uma Árvore B+ de pares `(email, idUsuario)`.
@@ -246,25 +244,8 @@ Substituir cada marcação por uma imagem da execução real:
 
 ---
 
-## 10. Roteiro sugerido para o vídeo
 
-O vídeo deve ter no máximo cinco minutos. Uma sequência possível é:
-
-1. apresentar rapidamente o objetivo do Ajuda Aí 1.0;
-2. cadastrar um novo usuário;
-3. tentar entrar com uma senha incorreta;
-4. escolher a recuperação, responder à pergunta secreta e definir uma nova senha;
-5. fazer o login corretamente;
-6. alterar o e-mail e explicar `Menu.meusDados` e `BancoDados.atualizarUsuario`, destacando a atualização do índice de e-mail na Árvore B+;
-7. incluir uma pergunta e mostrar que o autor é associado automaticamente;
-8. listar as perguntas do usuário;
-9. alterar o texto e as palavras-chave de uma pergunta;
-10. arquivar a pergunta e explicar `Menu.arquivarPergunta`, o campo `ativa` e a atualização feita pelo CRUD;
-11. encerrar indicando onde estão as classes principais no repositório.
-
----
-
-## 11. Compilação, testes e execução
+## 10. Compilação, testes e execução
 
 O projeto exige Java 19 e Maven.
 
