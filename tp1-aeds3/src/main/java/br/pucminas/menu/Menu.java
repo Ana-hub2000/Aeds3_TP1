@@ -35,9 +35,25 @@ public class Menu {
     }
 
     private void limparTela() {
-        System.out.print("\033[2J\033[3J\033[H");
-        System.out.flush();
+    limparTela(true);
+}
+
+private void limparTela(boolean esperar) {
+    if (esperar) {
+        try {
+            new ProcessBuilder("stty", "-echo").inheritIO().start().waitFor();
+            Thread.sleep(ATRASO_MS);
+            while (System.in.available() > 0) System.in.read();
+        } catch (Exception ignored) {
+        } finally {
+            try {
+                new ProcessBuilder("stty", "echo").inheritIO().start().waitFor();
+            } catch (Exception ignored) {}
+        }
     }
+    System.out.print("\033[2J\033[3J\033[H");
+    System.out.flush();
+}
 
     private void aguardar() {
         try {
