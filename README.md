@@ -11,6 +11,8 @@
 | [NOME DO PARTICIPANTE 1] | [MATRÍCULA] |
 | [NOME DO PARTICIPANTE 2] | [MATRÍCULA] |
 | [NOME DO PARTICIPANTE 3] | [MATRÍCULA] |
+| [Ana Flávia Menezes de Almeida] | [8976988] |
+
 
 - **Turma:** [PREENCHER]
 - **Professor:** [PREENCHER]
@@ -230,11 +232,11 @@ Substituir cada marcação por uma imagem da execução real:
 
 `[INSERIR CAPTURA DO LOGIN CORRETO E DO MENU PRINCIPAL]`
 
-### Alteração de e-mail
+### Alteração de e-mail (Ana Flávia Menezes)
 
 `[INSERIR CAPTURA DA ALTERAÇÃO DO E-MAIL]`
 
-### Gestão de perguntas
+### Gestão de perguntas (Ana Flávia Menezes)
 
 `[INSERIR CAPTURA DA INCLUSÃO E DA LISTAGEM]`
 
