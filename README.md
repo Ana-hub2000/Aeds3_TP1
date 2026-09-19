@@ -227,8 +227,15 @@ Substituir cada marcação por uma imagem da execução real:
 `[INSERIR CAPTURA DO LOGIN FALHANDO E DA RECUPERAÇÃO]`
 
 ### Menu principal (Clarisse de Assis)
+Após realizar o login, o usuário é direcionado ao menu principal do sistema Ajuda Aí 1.0. Nesse menu, são disponibilizadas as opções de acesso à área do usuário, busca de perguntas e encerramento do sistema.
 
-`[INSERIR CAPTURA DO LOGIN CORRETO E DO MENU PRINCIPAL]`
+A opção Minha área permite acessar funcionalidades relacionadas ao usuário conectado, incluindo seus dados e suas perguntas. A opção Buscar perguntas está presente no menu, porém a busca global não faz parte do escopo implementado nesta etapa do trabalho.
+
+<img width="276" height="195" alt="image" src="https://github.com/user-attachments/assets/d3712a4d-33d7-4620-90a7-0c0a352ea861" />
+
+
+Figura 4 – Menu principal do sistema após o login.
+
 
 ### Alteração de e-mail (Ana Flávia Menezes)
 
