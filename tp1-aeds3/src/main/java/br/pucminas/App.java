@@ -1,13 +1,10 @@
 package br.pucminas;
 
 /**
- * Hello world!
- *
+ * Compatibility entry point kept for the Maven starter project.
  */
-public class App 
-{
-    public static void main( String[] args )
-    {
-        System.out.println( "Hello World!" );
+public class App {
+    public static void main(String[] args) {
+        Main.main(args);
     }
 }

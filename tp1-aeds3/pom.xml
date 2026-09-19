@@ -14,7 +14,8 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.release>21</maven.compiler.release>
+    <!-- Replit's provided Java toolchain is Java 19; the code uses no newer APIs. -->
+    <maven.compiler.release>19</maven.compiler.release>
   </properties>
 
   <dependencies>
