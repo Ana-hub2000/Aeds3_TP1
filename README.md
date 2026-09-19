@@ -214,15 +214,15 @@ Respostas conferidas após as correções, com `mvn test` executado em **19/09/2
 
 Substituir cada marcação por uma imagem da execução real:
 
-### Tela inicial
+### Tela inicial // EDUARDO
 
 `[INSERIR CAPTURA DA TELA DE LOGIN/NOVO USUÁRIO]`
 
-### Cadastro concluído
+### Cadastro concluído// EDUARDO
 
 `[INSERIR CAPTURA DO CADASTRO DE UM NOVO USUÁRIO]`
 
-### Recuperação de senha
+### Recuperação de senha// EDUARDO
 
 `[INSERIR CAPTURA DO LOGIN FALHANDO E DA RECUPERAÇÃO]`
 
