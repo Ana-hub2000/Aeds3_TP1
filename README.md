@@ -9,8 +9,8 @@
 | Nome completo | Matrícula |
 | --- | --- |
 | Ana Flávia Menezes de Almeida | 8976988 |
-| Clarisse de Assis Pereira | [903541] |
-| Eduardo Borges de Souza | [890309] |
+| Clarisse de Assis Pereira | 903541 |
+| Eduardo Borges de Souza | 890309 |
 | Rian Chaves Pimenta | 898910 |
 
 
