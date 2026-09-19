@@ -228,7 +228,7 @@ Substituir cada marcação por uma imagem da execução real:
 
 `[INSERIR CAPTURA DO LOGIN FALHANDO E DA RECUPERAÇÃO]`
 
-### Menu principal
+### Menu principal (Clarisse de Assis)
 
 `[INSERIR CAPTURA DO LOGIN CORRETO E DO MENU PRINCIPAL]`
 
