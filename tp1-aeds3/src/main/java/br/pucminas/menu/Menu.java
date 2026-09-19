@@ -1,16 +1,16 @@
 package br.pucminas.menu;
 
-import br.pucminas.model.Pergunta;
-import br.pucminas.model.Usuario;
-import br.pucminas.repository.BancoDados;
-import br.pucminas.security.Seguranca;
-
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+
+import br.pucminas.model.Pergunta;
+import br.pucminas.model.Usuario;
+import br.pucminas.repository.BancoDados;
+import br.pucminas.security.Seguranca;
 
 public class Menu {
     private static final DateTimeFormatter DATA =
@@ -369,7 +369,7 @@ public class Menu {
                 return valorPadrao;
             }
             if (!valor.isEmpty()) {
-                return valor;2
+                return valor;
                 
             }
             erro("Este campo é obrigatório.");
