@@ -8,15 +8,15 @@
 
 | Nome completo | Matrícula |
 | --- | --- |
-| [NOME DO PARTICIPANTE 1] | [MATRÍCULA] |
-| [NOME DO PARTICIPANTE 2] | [MATRÍCULA] |
-| [NOME DO PARTICIPANTE 3] | [MATRÍCULA] |
 | [Ana Flávia Menezes de Almeida] | [8976988] |
+| [Clarisse de Assis Pereira] | [903541] |
+| [Eduardo Borges de Souza] | [890309] |
+| [Rian Chaves Pimenta] | [898910] |
 
 
-- **Turma:** [PREENCHER]
-- **Professor:** [PREENCHER]
-- **Repositório:** [INSERIR URL DO GITHUB]
+- **Turma:** [(8203100) Algoritmos e Estruturas de Dados III]
+- **Professor:** [Marcos André Silveira Kutova]
+- **Repositório:** [https://github.com/Ana-hub2000/Aeds3_TP1]
 - **Vídeo de demonstração:** [INSERIR LINK]
 
 ---
