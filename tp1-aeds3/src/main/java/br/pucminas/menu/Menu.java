@@ -1,17 +1,21 @@
 package br.pucminas.menu;
 
+import br.pucminas.model.Pergunta;
+import br.pucminas.model.Usuario;
+import br.pucminas.repository.BancoDados;
+import br.pucminas.security.Seguranca;
+
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-
-import br.pucminas.model.Pergunta;
-import br.pucminas.model.Usuario;
-import br.pucminas.repository.BancoDados;
-import br.pucminas.security.Seguranca;
-
+/* 
+ essa classe serve para mosatrar ao usuario o menu do sistema, e para interagir com ele, chamando os metodos do banco de dados,
+ foi feita utilizando maven e lanterna, porem por utulizar o lanterna, foi necessario fazer algumas adaptações, como por exemplo,
+  utilizar o System.out.println para mostrar as mensagens na tela, e o Scanner para ler a entrada do usuario.
+*/
 public class Menu {
     private static final DateTimeFormatter DATA =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
@@ -25,6 +29,7 @@ public class Menu {
     private static final String VERDE = "\u001B[1;38;5;114m";
     private static final String VERMELHO = "\u001B[1;38;5;203m";
     private static final long ATRASO_MS = 1800;
+    private static final long ATRASO_REGISTRO_MS = 7000;
 
     private final BancoDados banco;
     private final Scanner entrada;
@@ -35,11 +40,11 @@ public class Menu {
     }
 
     private void limparTela() {
-    limparTela(true);
-}
+        System.out.print("\033[2J\033[3J\033[H");
+        System.out.flush();
+    }
 
-private void limparTela(boolean esperar) {
-    if (esperar) {
+    private void aguardar() {
         try {
             new ProcessBuilder("stty", "-echo").inheritIO().start().waitFor();
             Thread.sleep(ATRASO_MS);
@@ -51,14 +56,12 @@ private void limparTela(boolean esperar) {
             } catch (Exception ignored) {}
         }
     }
-    System.out.print("\033[2J\033[3J\033[H");
-    System.out.flush();
-}
 
-    private void aguardar() {
+    private void aguardarRegistro() {
+        System.out.println(RODAPE_COR + "Salvando no sistema..." + RESET);
         try {
             new ProcessBuilder("stty", "-echo").inheritIO().start().waitFor();
-            Thread.sleep(ATRASO_MS);
+            Thread.sleep(ATRASO_REGISTRO_MS);
             while (System.in.available() > 0) System.in.read();
         } catch (Exception ignored) {
         } finally {
@@ -142,10 +145,11 @@ private void limparTela(boolean esperar) {
             banco.criarUsuario(new Usuario(nome, email, Seguranca.hashSenha(senha),
                     pergunta, Seguranca.hashResposta(resposta)));
             sucesso("Usuário cadastrado com sucesso.");
+            aguardarRegistro();
         } catch (IllegalArgumentException e) {
             erro(e.getMessage());
+            aguardar();
         }
-        aguardar();
     }
 
     private void login() {
@@ -197,7 +201,7 @@ private void limparTela(boolean esperar) {
         usuario.setHashSenha(Seguranca.hashSenha(textoObrigatorio("Nova senha: ")));
         banco.atualizarUsuario(usuario, usuario.getEmail());
         sucesso("Senha alterada com sucesso.");
-        aguardar();
+        aguardarRegistro();
     }
 
     private void menuPrincipal(Usuario usuario) {
@@ -271,6 +275,7 @@ private void limparTela(boolean esperar) {
                 }
                 banco.atualizarUsuario(usuario, emailAnterior);
                 sucesso("Dados atualizados.");
+                aguardarRegistro();
             } catch (IllegalArgumentException e) {
                 erro(e.getMessage());
             }
@@ -317,6 +322,7 @@ private void limparTela(boolean esperar) {
         String palavras = textoObrigatorio("Palavras-chave (separadas por ponto e vírgula): ");
         banco.criarPergunta(new Pergunta(usuario.getIdUsuario(), texto, palavras));
         sucesso("Pergunta incluída com sucesso.");
+        aguardarRegistro();
     }
 
     private void editarPergunta(List<Pergunta> perguntas) {
@@ -331,6 +337,7 @@ private void limparTela(boolean esperar) {
         pergunta.setAlteracao(System.currentTimeMillis());
         banco.atualizarPergunta(pergunta);
         sucesso("Pergunta alterada.");
+        aguardarRegistro();
     }
 
     private void arquivarPergunta(List<Pergunta> perguntas) {
@@ -342,6 +349,7 @@ private void limparTela(boolean esperar) {
         pergunta.setAlteracao(System.currentTimeMillis());
         banco.atualizarPergunta(pergunta);
         sucesso("Pergunta arquivada. O registro não foi excluído.");
+        aguardarRegistro();
     }
 
     private Pergunta selecionarPergunta(List<Pergunta> perguntas) {
@@ -386,7 +394,6 @@ private void limparTela(boolean esperar) {
             }
             if (!valor.isEmpty()) {
                 return valor;
-                
             }
             erro("Este campo é obrigatório.");
         }
