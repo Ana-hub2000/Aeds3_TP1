@@ -216,17 +216,17 @@ Substituir cada marcação por uma imagem da execução real:
 
 ### Tela inicial // EDUARDO
 
-`[INSERIR CAPTURA DA TELA DE LOGIN/NOVO USUÁRIO]`
+<img width="276" height="195" alt="image" src="imgs\anterior.png" />
 
 ### Cadastro concluído// EDUARDO
 
-`[INSERIR CAPTURA DO CADASTRO DE UM NOVO USUÁRIO]`
+<img width="276" height="195" alt="image" src="imgs\novo_usuario.jpeg" />
 
 ### Recuperação de senha// EDUARDO
 
-`[INSERIR CAPTURA DO LOGIN FALHANDO E DA RECUPERAÇÃO]`
+<img width="276" height="195" alt="image" src="imgs\senha_alterada.jpeg" />
 
-### Menu principal (Clarisse de Assis)
+### Menu principal 
 Após realizar o login, o usuário é direcionado ao menu principal do sistema Ajuda Aí 1.0. Nesse menu, são disponibilizadas as opções de acesso à área do usuário, busca de perguntas e encerramento do sistema.
 
 A opção Minha área permite acessar funcionalidades relacionadas ao usuário conectado, incluindo seus dados e suas perguntas. A opção Buscar perguntas está presente no menu, porém a busca global não faz parte do escopo implementado nesta etapa do trabalho.
