@@ -214,27 +214,21 @@ O vínculo 1:N usa a Árvore B+ de pares `(idUsuario, idPergunta)` (`ParIdId`). 
 
 Substituir cada marcação por uma imagem da execução real:
 
-### Tela inicial // EDUARDO
+### Tela inicial 
 
 <img width="276" height="195" alt="image" src="imgs\anterior.png" />
 
-### Cadastro concluído// EDUARDO
+### Cadastro concluído
 
 <img width="276" height="195" alt="image" src="imgs\novo_usuario.jpeg" />
 
-### Recuperação de senha// EDUARDO
+### Recuperação de senha
 
 <img width="276" height="195" alt="image" src="imgs\senha_alterada.jpeg" />
 
 ### Menu principal 
-Após realizar o login, o usuário é direcionado ao menu principal do sistema Ajuda Aí 1.0. Nesse menu, são disponibilizadas as opções de acesso à área do usuário, busca de perguntas e encerramento do sistema.
-
-A opção Minha área permite acessar funcionalidades relacionadas ao usuário conectado, incluindo seus dados e suas perguntas. A opção Buscar perguntas está presente no menu, porém a busca global não faz parte do escopo implementado nesta etapa do trabalho.
 
 <img width="276" height="195" alt="image" src="https://github.com/user-attachments/assets/d3712a4d-33d7-4620-90a7-0c0a352ea861" />
-
-
-Figura 4 – Menu principal do sistema após o login.
 
 
 ### Alteração de e-mail (Ana Flávia Menezes)
