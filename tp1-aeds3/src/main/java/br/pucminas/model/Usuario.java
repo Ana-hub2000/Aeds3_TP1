@@ -1,14 +1,24 @@
 package br.pucminas.model;
 
+<<<<<<< HEAD
 import br.pucminas.persistence.Registro;
 
+=======
+>>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+<<<<<<< HEAD
 import java.io.IOException;
 
 public class Usuario implements Registro {
+=======
+
+// Agora o Usuario segue a interface da disciplina (aed3.InterfaceRegistro),
+// para poder ser gravado pela classe Arquivo do professor.
+public class Usuario implements aed3.InterfaceRegistro {
+>>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
     private int idUsuario;
     private String nome;
     private String email;
@@ -16,11 +26,21 @@ public class Usuario implements Registro {
     private String perguntaSecreta;
     private String hashRespostaSecreta;
 
+<<<<<<< HEAD
     public Usuario() {
+=======
+    // O construtor vazio e obrigatorio: o Arquivo usa reflexao para criar o objeto
+    public Usuario() {
+        this("", "", "", "", "");
+>>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
     }
 
     public Usuario(String nome, String email, String hashSenha,
                    String perguntaSecreta, String hashRespostaSecreta) {
+<<<<<<< HEAD
+=======
+        this.idUsuario = -1;
+>>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
         this.nome = nome;
         this.email = email;
         this.hashSenha = hashSenha;
@@ -28,6 +48,7 @@ public class Usuario implements Registro {
         this.hashRespostaSecreta = hashRespostaSecreta;
     }
 
+<<<<<<< HEAD
     public static Usuario fromByteArray(byte[] bytes) {
         try (DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes))) {
             Usuario usuario = new Usuario();
@@ -61,6 +82,34 @@ public class Usuario implements Registro {
 
     private static String safe(String value) {
         return value == null ? "" : value;
+=======
+    @Override
+    public byte[] serialize() throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(baos);
+        dos.writeInt(idUsuario);
+        dos.writeUTF(texto(nome));
+        dos.writeUTF(texto(email));
+        dos.writeUTF(texto(hashSenha));
+        dos.writeUTF(texto(perguntaSecreta));
+        dos.writeUTF(texto(hashRespostaSecreta));
+        return baos.toByteArray();
+    }
+
+    @Override
+    public void deserialize(byte[] ba) throws Exception {
+        DataInputStream dis = new DataInputStream(new ByteArrayInputStream(ba));
+        this.idUsuario = dis.readInt();
+        this.nome = dis.readUTF();
+        this.email = dis.readUTF();
+        this.hashSenha = dis.readUTF();
+        this.perguntaSecreta = dis.readUTF();
+        this.hashRespostaSecreta = dis.readUTF();
+    }
+
+    private static String texto(String valor) {
+        return valor == null ? "" : valor;
+>>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
     }
 
     @Override
@@ -116,4 +165,13 @@ public class Usuario implements Registro {
     public void setHashRespostaSecreta(String hashRespostaSecreta) {
         this.hashRespostaSecreta = hashRespostaSecreta;
     }
+<<<<<<< HEAD
 }
+=======
+
+    @Override
+    public String toString() {
+        return idUsuario + " - " + nome + " (" + email + ")";
+    }
+}
+>>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b

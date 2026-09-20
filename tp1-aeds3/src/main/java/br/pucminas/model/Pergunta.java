@@ -1,14 +1,23 @@
 package br.pucminas.model;
 
+<<<<<<< HEAD
 import br.pucminas.persistence.Registro;
 
+=======
+>>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+<<<<<<< HEAD
 import java.io.IOException;
 
 public class Pergunta implements Registro {
+=======
+
+// Mesma ideia do Usuario: implementa a interface da disciplina.
+public class Pergunta implements aed3.InterfaceRegistro {
+>>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
     private int idPergunta;
     private int idUsuario;
     private long criacao;
@@ -19,10 +28,18 @@ public class Pergunta implements Registro {
     private boolean ativa;
 
     public Pergunta() {
+<<<<<<< HEAD
+=======
+        this(-1, "", "");
+>>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
     }
 
     public Pergunta(int idUsuario, String pergunta, String palavrasChave) {
         long agora = System.currentTimeMillis();
+<<<<<<< HEAD
+=======
+        this.idPergunta = -1;
+>>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
         this.idUsuario = idUsuario;
         this.criacao = agora;
         this.alteracao = agora;
@@ -32,6 +49,7 @@ public class Pergunta implements Registro {
         this.ativa = true;
     }
 
+<<<<<<< HEAD
     public static Pergunta fromByteArray(byte[] bytes) {
         try (DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes))) {
             Pergunta pergunta = new Pergunta();
@@ -69,6 +87,38 @@ public class Pergunta implements Registro {
 
     private static String safe(String value) {
         return value == null ? "" : value;
+=======
+    @Override
+    public byte[] serialize() throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(baos);
+        dos.writeInt(idPergunta);
+        dos.writeInt(idUsuario);
+        dos.writeLong(criacao);
+        dos.writeLong(alteracao);
+        dos.writeShort(nota);
+        dos.writeUTF(texto(pergunta));
+        dos.writeUTF(texto(palavrasChave));
+        dos.writeBoolean(ativa);
+        return baos.toByteArray();
+    }
+
+    @Override
+    public void deserialize(byte[] ba) throws Exception {
+        DataInputStream dis = new DataInputStream(new ByteArrayInputStream(ba));
+        this.idPergunta = dis.readInt();
+        this.idUsuario = dis.readInt();
+        this.criacao = dis.readLong();
+        this.alteracao = dis.readLong();
+        this.nota = dis.readShort();
+        this.pergunta = dis.readUTF();
+        this.palavrasChave = dis.readUTF();
+        this.ativa = dis.readBoolean();
+    }
+
+    private static String texto(String valor) {
+        return valor == null ? "" : valor;
+>>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
     }
 
     @Override
@@ -132,4 +182,8 @@ public class Pergunta implements Registro {
     public void setAtiva(boolean ativa) {
         this.ativa = ativa;
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
