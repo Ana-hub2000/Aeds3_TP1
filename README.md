@@ -231,17 +231,19 @@ Substituir cada marcação por uma imagem da execução real:
 <img width="276" height="195" alt="image" src="https://github.com/user-attachments/assets/d3712a4d-33d7-4620-90a7-0c0a352ea861" />
 
 
-### Alteração de e-mail (Ana Flávia Menezes)
+### Alteração de e-mail 
 
-`[INSERIR CAPTURA DA ALTERAÇÃO DO E-MAIL]`
+<img width="276" height="195" alt="image" src="imgs\antes.jpg" />
 
-### Gestão de perguntas (Ana Flávia Menezes)
+<img width="276" height="195" alt="image" src="imgs\perguntas_menu.jpg" /> 
 
-`[INSERIR CAPTURA DA INCLUSÃO E DA LISTAGEM]`
+<img width="276" height="195" alt="image" src="imgs\novo_email.jpg" />
 
-`[INSERIR CAPTURA DA ALTERAÇÃO DE UMA PERGUNTA]`
+<img width="276" height="195" alt="image" src="imgs\add_perguntas.jpg" />
 
-`[INSERIR CAPTURA DO ARQUIVAMENTO]`
+<img width="276" height="195" alt="image" src="imgs\caminho_para_alterar.jpg" />
+
+<img width="276" height="195" alt="image" src="imgs\perguntas_alteradas.jpg" />
 
 ---
 
