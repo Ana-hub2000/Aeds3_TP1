@@ -1,10 +1,8 @@
 # Relatório do Trabalho Prático 1 — AEDS III
 
-## Sistema Ajuda Aí 1.0
+### Sistema Ajuda Aí 1.0
 
 ### Participantes
-
-> Preencher antes da entrega.
 
 | Nome completo | Matrícula |
 | --- | --- |
@@ -19,15 +17,13 @@
 - **Repositório:** https://github.com/Ana-hub2000/Aeds3_TP1
 - **Vídeo de demonstração:** [INSERIR LINK]
 
----
-
 ## 1. Descrição do trabalho
 
 O Ajuda Aí 1.0 é um sistema de perguntas desenvolvido em Java, com interface de texto e armazenamento em arquivos binários. Nesta primeira etapa foram trabalhados o cadastro e a autenticação de usuários, a recuperação de senha e o gerenciamento das perguntas do usuário que está conectado.
 
-Depois do login, o usuário pode consultar e alterar seus dados, incluir perguntas, listar suas perguntas ativas, alterar o texto e as palavras-chave de uma pergunta e arquivá-la. As áreas de respostas, votos e busca global aparecem no menu, mas foram deixadas para etapas posteriores, conforme previsto no enunciado.
+Após o login, o usuário pode consultar e alterar seus dados, incluir perguntas, listar suas perguntas ativas, alterar o texto e as palavras-chave de uma pergunta e arquivá-la. As áreas de respostas, votos e busca global aparecem no menu, mas foram deixadas para etapas posteriores, conforme previsto no enunciado.
 
-Os dados não dependem de um banco de dados externo. Usuários, perguntas e índices são gravados em arquivos no diretório `data`. Quando o programa é iniciado, esses arquivos são abertos e os índices são reconstruídos a partir dos registros válidos.
+Os dados não dependem de um banco de dados externo. Usuários, perguntas e índices são gravados em arquivos binários no diretório `data`. Quando o programa é iniciado, esses arquivos são abertos e os índices são reconstruídos a partir dos registros válidos.
 
 ## 2. Funcionalidades implementadas
 
@@ -87,22 +83,20 @@ O sistema não oferece uma opção de desarquivamento, portanto o procedimento �
 
 **Limitação conhecida:** a consulta `perguntasDoUsuario` filtra as perguntas inativas. Por esse motivo, uma pergunta arquivada deixa de aparecer até para seu autor, enquanto o enunciado pede que ela continue visível ao autor com a indicação `ARQUIVADA`.
 
----
-
 ## 3. Organização das classes
 
-### Inicialização e interface
+### 3.1 Inicialização e interface
 
 - **`Main`**: define o diretório dos dados, abre o banco e inicia o menu.
 - **`App`**: ponto de entrada mantido para executar `Main` pelo Maven.
 - **`Menu`**: controla as telas, lê as opções e coordena cadastro, login, recuperação, edição de dados e gestão de perguntas.
 
-### Entidades
+### 3.2 Entidades
 
 - **`Usuario`**: representa o usuário e implementa `aed3.InterfaceRegistro` (`serialize`/`deserialize`, `getId`/`setId`).
 - **`Pergunta`**: representa a pergunta, seus metadados, seu autor e seu estado de arquivamento; também implementa `aed3.InterfaceRegistro`.
 
-### Persistência e índices (classes do professor, pacote `aed3`)
+### 3.3 Persistência e índices (classes do professor, pacote `aed3`)
 
 - **`Arquivo<T>`**: CRUD fornecido na disciplina. Grava lápide, indicador de tamanho em `short` e o vetor de bytes, e mantém o índice direto ID → endereço em uma **Tabela Hash Extensível** (`HashExtensivel<ParIDEndereco>`).
 - **`HashExtensivel<T>`**: tabela hash extensível com diretório e cestos gravados em disco.
@@ -113,16 +107,14 @@ O sistema não oferece uma opção de desarquivamento, portanto o procedimento �
 
 A única alteração feita nas classes do professor foi um construtor extra em `Arquivo`, que recebe a pasta base dos dados (o original grava sempre em `./dados`). Isso foi necessário para os testes automatizados, que usam pasta temporária; o construtor original continua existindo e com o mesmo comportamento.
 
-### Segurança
+### 3.4 Segurança
 
 - **`Seguranca`**: calcula hashes SHA-256, normaliza respostas secretas e compara a senha informada com o hash gravado.
 
-### Testes
+### 3.5 Testes
 
 - **`BancoDadosTest`** (em `src/test/java`): persistência de usuários e perguntas, alteração, arquivamento, listagem com e sem arquivadas, recusa de pergunta com usuário inexistente, carga de 25 perguntas para forçar a divisão de páginas da Árvore B+ e reabertura do banco.
 - **`AppTest`**: teste básico gerado pelo modelo inicial do Maven.
-
----
 
 ## 4. Estrutura dos arquivos
 
@@ -140,19 +132,17 @@ Os arquivos ficam em `dados/usuarios/`, `dados/perguntas/` (dados + índice dire
 
 ## 5. Índices e relacionamento 1:N
 
-### Índice direto por ID
+### 5.1 Índice direto por ID
 
 É o `HashExtensivel<ParIDEndereco>` que já vem dentro da classe `Arquivo`: a chave é o ID da entidade e o valor é o endereço do registro no arquivo, o que evita percorrer o arquivo em cada leitura.
 
-### Índice de e-mail
+### 5.2 Índice de e-mail
 
 Índice indireto em Árvore B+ de pares `(email, idUsuario)`, usando a classe `ParEmailId`. O e-mail é normalizado (sem espaços, em minúsculas) antes de entrar na árvore. Quando o usuário troca o e-mail, o par antigo é removido e o novo é inserido.
 
-### Relacionamento usuário–perguntas
+### 5.3 Relacionamento usuário–perguntas
 
 O vínculo 1:N usa a Árvore B+ de pares `(idUsuario, idPergunta)` (`ParIdId`). Como o `compareTo` do `ParIdId` ignora o segundo ID quando ele vale `-1`, a busca por `new ParIdId(idUsuario)` devolve de uma vez todas as perguntas daquele usuário.
-
----
 
 ## 6. Operações especiais implementadas
 
@@ -167,88 +157,92 @@ O vínculo 1:N usa a Árvore B+ de pares `(idUsuario, idPergunta)` (`ParIdId`). 
 9. **Reconstrução dos índices:** se um arquivo de índice estiver vazio, ele é remontado a partir dos arquivos de dados na abertura do sistema.
 10. **Arquivamento:** a pergunta continua no arquivo com `ativa = false` e aparece para o autor marcada como `ARQUIVADA`.
 
----
-
 ## 7. Checklist obrigatório
 
-### Há um CRUD de usuários (que estende a classe Arquivo, acrescentando Tabelas Hash Extensíveis e Árvores B+ como índices diretos e indiretos conforme necessidade) que funciona corretamente?
+* Há um CRUD de usuários (que estende a classe Arquivo, acrescentando Tabelas Hash Extensíveis e Árvores B+ como índices diretos e indiretos conforme necessidade) que funciona corretamente?
 
 **Sim.** Os usuários são gravados pela classe `Arquivo` do professor, que já traz o índice direto em tabela hash extensível (ID → endereço). O índice indireto por e-mail é uma Árvore B+ de pares `(email, idUsuario)`.
 
-### Há um CRUD de perguntas (que estende a classe Arquivo, acrescentando Tabelas Hash Extensíveis e Árvores B+ como índices diretos e indiretos conforme necessidade) que funciona corretamente?
+* Há um CRUD de perguntas (que estende a classe Arquivo, acrescentando Tabelas Hash Extensíveis e Árvores B+ como índices diretos e indiretos conforme necessidade) que funciona corretamente?
 
 **Sim.** As perguntas usam o mesmo `Arquivo` (com hash extensível por ID) e uma Árvore B+ com os pares `(idUsuario, idPergunta)`. A listagem mostra ao autor também as perguntas arquivadas.
 
-### As perguntas estão vinculadas aos usuários usando o idUsuario como chave estrangeira?
+* As perguntas estão vinculadas aos usuários usando o idUsuario como chave estrangeira?
 
 **Sim.** A entidade `Pergunta` guarda o `idUsuario` e `BancoDados.criarPergunta` verifica se esse usuário existe antes de gravar.
 
-### Há uma árvore B+ que registre o relacionamento 1:N entre usuários e perguntas?
+* Há uma árvore B+ que registre o relacionamento 1:N entre usuários e perguntas?
 
 **Sim.** É a `ArvoreBMais<ParIdId>` fornecida pelo professor, gravada em `dados/indicePerguntas.bplus`. O teste com 25 perguntas do mesmo usuário passa pela divisão de páginas e continua recuperando todos os registros.
 
-### O trabalho compila corretamente?
+* O trabalho compila corretamente?
 
 **Sim.** `mvn test` termina com `BUILD SUCCESS`.
 
-### O trabalho está completo e funcionando sem erros de execução?
+* O trabalho está completo e funcionando sem erros de execução?
 
 **Sim, para o escopo do TP1.** Cadastro, login, recuperação de senha, alteração de dados e gestão de perguntas funcionam. Busca global, respostas e votos são etapas seguintes e não fazem parte deste trabalho.
 
-### O trabalho é original e não a cópia de um trabalho de outro grupo?
+* O trabalho é original e não a cópia de um trabalho de outro grupo?
 
-**[RESPONDER PELOS INTEGRANTES: SIM/NÃO].** Essa informação não pode ser confirmada somente pela leitura do repositório.
+**Sim,** este trabalho foi realizado com base no que foi passado em sala de aula, apezar de, também, contar com auxílio de inteligência artificial como ferramenta de suporte.
 
----
+## 8. Capturas de tela
 
-## 8. Pendências antes da entrega
+A seguir algumas imagens de funcionalidades aplicadas.
 
-1. Preencher nomes, matrículas, turma, URL do GitHub e link do vídeo.
-2. Inserir as capturas indicadas na seção seguinte.
-3. Confirmar com o professor se o e-mail pode ficar limitado a 60 bytes no índice (limite do registro de tamanho fixo da Árvore B+).
+<center><h3> Tela inicial </h3></center> 
+<p align="center">
+    <img width="400" alt="image" src="imgs\anterior.png" />
+</p>
+
+<center><h3> Cadastro </h3></center>
+<p align="center">
+    <img width="400" alt="image" src="imgs\novo_usuario.jpeg" />
+</p>
+
+<center><h3> Recuperação de senha </h3></center>
+<p align="center">
+    <img width="400" alt="image" src="imgs\senha_alterada.jpeg" />
+</p>
+
+<center><h3> Menu principal </h3></center>
+<p align="center">
+    <img width="400" alt="image" src="https://github.com/user-attachments/assets/d3712a4d-33d7-4620-90a7-0c0a352ea861" />
+</p>
+
+<center><h3> Menu de dados </h3></center>
+<p align="center">
+    <img width="400" alt="image" src="imgs\antes.jpg" />
+</p>
+
+<center><h3> Dados / alteração de email </h3></center>
+<p align="center">
+    <img width="400" alt="image" src="imgs\novo_email.jpg" />
+</p>
+
+<center><h3> Área de perguntas do usuário </h3></center>
+<p align="center">
+    <img width="400" alt="image" src="imgs\perguntas_menu.jpg" /> 
+</p>
+
+<center><h3> Área de perguntas / cadastro de pergunta </h3></center>
+<p align="center">
+    <img width="400" alt="image" src="imgs\add_perguntas.jpg" />
+</p>
+
+<center><h3> Área de perguntas / alteração de pergunta </h3></center>
+<p align="center">
+    <img width="400" alt="image" src="imgs\caminho_para_alterar.jpg" />
+</p>
+
+<center><h3> Área de perguntas / exclusão de pergunta </h3></center>
+<p align="center">
+    <img width="400" alt="image" src="imgs\perguntas_alteradas.jpg" />
+</p>
 
 
----
-
-## 9. Capturas de tela para o relatório
-
-Substituir cada marcação por uma imagem da execução real:
-
-### Tela inicial 
-
-<img width="276" height="195" alt="image" src="imgs\anterior.png" />
-
-### Cadastro concluído
-
-<img width="276" height="195" alt="image" src="imgs\novo_usuario.jpeg" />
-
-### Recuperação de senha
-
-<img width="276" height="195" alt="image" src="imgs\senha_alterada.jpeg" />
-
-### Menu principal 
-
-<img width="276" height="195" alt="image" src="https://github.com/user-attachments/assets/d3712a4d-33d7-4620-90a7-0c0a352ea861" />
-
-
-### Alteração de e-mail 
-
-<img width="276" height="195" alt="image" src="imgs\antes.jpg" />
-
-<img width="276" height="195" alt="image" src="imgs\perguntas_menu.jpg" /> 
-
-<img width="276" height="195" alt="image" src="imgs\novo_email.jpg" />
-
-<img width="276" height="195" alt="image" src="imgs\add_perguntas.jpg" />
-
-<img width="276" height="195" alt="image" src="imgs\caminho_para_alterar.jpg" />
-
-<img width="276" height="195" alt="image" src="imgs\perguntas_alteradas.jpg" />
-
----
-
-
-## 10. Compilação, testes e execução
+## 9. Compilação, testes e execução
 
 O projeto exige Java 19 e Maven.
 
@@ -258,4 +252,5 @@ mvn test
 mvn exec:java
 ```
 
-A última execução de `mvn test` terminou com `Tests run: 4, Failures: 0, Errors: 0` e `BUILD SUCCESS`. Os dados ficam na pasta `dados/` (pode ser trocada com `-Dajudaai.data=...`).
+> Caso necessário obtenha o Maven acessando o site https://maven.apache.org/download.cgi e baixando o pacote 	`apache-maven-3.9.16-bin.zip`  \
+> Certifique-se que a variável de sistema `mvn` esteja configurada na máquina referenciando a pasta `bin`.
