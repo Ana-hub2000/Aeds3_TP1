@@ -1,15 +1,5 @@
 package br.pucminas.repository;
 
-<<<<<<< HEAD
-import br.pucminas.model.Pergunta;
-import br.pucminas.model.Usuario;
-import br.pucminas.persistence.ArvoreBMais;
-import br.pucminas.persistence.TabelaHashExtensivel;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-=======
 import aed3.Arquivo;
 import aed3.ArvoreBMais;
 import aed3.ParIdId;
@@ -20,33 +10,10 @@ import br.pucminas.persistence.ParEmailId;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
->>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
-<<<<<<< HEAD
-public class BancoDados implements AutoCloseable {
-    private final UsuarioCRUD usuarios;
-    private final PerguntaCRUD perguntas;
-    private final TabelaHashExtensivel indiceEmail;
-    private final ArvoreBMais indicePerguntasPorUsuario;
-
-    public BancoDados(Path diretorio) throws IOException {
-        Files.createDirectories(diretorio);
-        usuarios = new UsuarioCRUD(diretorio.resolve("usuarios.db"));
-        perguntas = new PerguntaCRUD(diretorio.resolve("perguntas.db"));
-        indiceEmail = new TabelaHashExtensivel(diretorio.resolve("emails.hash"));
-        indicePerguntasPorUsuario = new ArvoreBMais(diretorio.resolve("perguntas.bplus"));
-        reconstruirIndices();
-    }
-
-    public Usuario buscarUsuarioPorEmail(String email) {
-        try {
-            Integer id = indiceEmail.get(normalizarEmail(email));
-            return id == null ? null : usuarios.read(id);
-        } catch (IOException e) {
-=======
 /*
  Camada de acesso a dados.
 
@@ -94,7 +61,6 @@ public class BancoDados implements AutoCloseable {
             }
             return usuarios.read(achados.get(0).getId());
         } catch (Exception e) {
->>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
             throw falha("buscar usuário", e);
         }
     }
@@ -102,11 +68,7 @@ public class BancoDados implements AutoCloseable {
     public Usuario buscarUsuario(int id) {
         try {
             return usuarios.read(id);
-<<<<<<< HEAD
-        } catch (IOException e) {
-=======
         } catch (Exception e) {
->>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
             throw falha("ler usuário", e);
         }
     }
@@ -118,17 +80,11 @@ public class BancoDados implements AutoCloseable {
                 throw new IllegalArgumentException("E-mail já cadastrado.");
             }
             usuarios.create(usuario);
-<<<<<<< HEAD
-            indiceEmail.put(usuario.getEmail(), usuario.getIdUsuario());
-            return usuario;
-        } catch (IOException e) {
-=======
             indiceEmail.create(new ParEmailId(usuario.getEmail(), usuario.getIdUsuario()));
             return usuario;
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
->>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
             throw falha("criar usuário", e);
         }
     }
@@ -141,13 +97,6 @@ public class BancoDados implements AutoCloseable {
                 throw new IllegalArgumentException("E-mail já cadastrado.");
             }
             usuarios.update(usuario);
-<<<<<<< HEAD
-            if (!normalizarEmail(emailAnterior).equals(usuario.getEmail())) {
-                indiceEmail.remove(normalizarEmail(emailAnterior));
-            }
-            indiceEmail.put(usuario.getEmail(), usuario.getIdUsuario());
-        } catch (IOException e) {
-=======
 
             String anterior = normalizarEmail(emailAnterior);
             if (!anterior.equals(usuario.getEmail())) {
@@ -157,19 +106,10 @@ public class BancoDados implements AutoCloseable {
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
->>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
             throw falha("atualizar usuário", e);
         }
     }
 
-<<<<<<< HEAD
-    public Pergunta criarPergunta(Pergunta pergunta) {
-        try {
-            perguntas.create(pergunta);
-            indicePerguntasPorUsuario.inserir(pergunta.getIdUsuario(), pergunta.getIdPergunta());
-            return pergunta;
-        } catch (IOException e) {
-=======
     // -------------------- perguntas --------------------
 
     public Pergunta criarPergunta(Pergunta pergunta) {
@@ -185,7 +125,6 @@ public class BancoDados implements AutoCloseable {
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
->>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
             throw falha("criar pergunta", e);
         }
     }
@@ -195,47 +134,13 @@ public class BancoDados implements AutoCloseable {
             if (!perguntas.update(pergunta)) {
                 throw new IllegalArgumentException("Pergunta não encontrada.");
             }
-<<<<<<< HEAD
-        } catch (IOException e) {
-=======
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
->>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
             throw falha("atualizar pergunta", e);
         }
     }
 
-<<<<<<< HEAD
-    public List<Pergunta> perguntasDoUsuario(int idUsuario) {
-        try {
-            return indicePerguntasPorUsuario.buscar(idUsuario).stream()
-                    .map(id -> lerPergunta(id))
-                    .filter(p -> p != null && p.isAtiva())
-                    .sorted(Comparator.comparingLong(Pergunta::getCriacao))
-                    .toList();
-        } catch (RuntimeException e) {
-            throw e;
-        }
-    }
-
-    private Pergunta lerPergunta(int id) {
-        try {
-            return perguntas.read(id);
-        } catch (IOException e) {
-            throw falha("ler pergunta", e);
-        }
-    }
-
-    private void reconstruirIndices() throws IOException {
-        indiceEmail.clear();
-        for (Usuario usuario : usuarios.readAll()) {
-            indiceEmail.put(normalizarEmail(usuario.getEmail()), usuario.getIdUsuario());
-        }
-        indicePerguntasPorUsuario.clear();
-        for (Pergunta pergunta : perguntas.readAll()) {
-            indicePerguntasPorUsuario.inserir(pergunta.getIdUsuario(), pergunta.getIdPergunta());
-=======
     /** Somente as perguntas ativas do usuário. */
     public List<Pergunta> perguntasDoUsuario(int idUsuario) {
         return perguntasDoUsuario(idUsuario, false);
@@ -277,7 +182,6 @@ public class BancoDados implements AutoCloseable {
                 indicePerguntasPorUsuario.create(
                         new ParIdId(pergunta.getIdUsuario(), pergunta.getIdPergunta()));
             }
->>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
         }
     }
 
@@ -285,27 +189,13 @@ public class BancoDados implements AutoCloseable {
         return email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
     }
 
-<<<<<<< HEAD
-    private static IllegalStateException falha(String operacao, IOException e) {
-=======
     private static IllegalStateException falha(String operacao, Exception e) {
->>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
         return new IllegalStateException("Falha ao " + operacao + ".", e);
     }
 
     @Override
-<<<<<<< HEAD
-    public void close() {
-        usuarios.close();
-        perguntas.close();
-        indiceEmail.close();
-        indicePerguntasPorUsuario.close();
-    }
-}
-=======
     public void close() throws Exception {
         usuarios.close();
         perguntas.close();
     }
 }
->>>>>>> 9dcc73d58fb43770a8a2f588cbcbe6df9f12c31b
