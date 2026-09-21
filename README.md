@@ -15,7 +15,7 @@
 - **Turma:** (8203100) Algoritmos e Estruturas de Dados III
 - **Professor:** Marcos André Silveira Kutova
 - **Repositório:** https://github.com/Ana-hub2000/Aeds3_TP1
-- **Vídeo de demonstração:** [INSERIR LINK]
+- **Vídeo de demonstração:** https://github.com/Ana-hub2000/Aeds3_TP1/tree/main/video
 
 ## 1. Descrição do trabalho
 
