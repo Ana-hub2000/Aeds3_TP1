@@ -112,6 +112,13 @@ public class Menu {
         return " ".repeat(Math.max(0, largura - texto.length())) + texto;
     }
 
+    /**
+     * É a tela inicial com as opções de:
+     * * Login
+     * * Cadastro
+     * * Sair
+     * É um modal de redirecionamento de tela
+     */
     public void executar() {
         boolean continuar = true;
         boolean primeiraVez = true;
@@ -131,6 +138,7 @@ public class Menu {
         limparTela();
         System.out.println("Até mais!");
     }
+
 
     private void novoUsuario() {
         limparTela();
@@ -240,6 +248,9 @@ public class Menu {
         }
     }
 
+    /*
+     * cria a interface com os dados do usuário
+    */
     private void meusDados(Usuario usuario) {
         boolean continuar = true;
         boolean primeiraVez = true;
