@@ -49,6 +49,14 @@ public class BancoDados implements AutoCloseable {
 
     // -------------------- usuarios --------------------
 
+    /**
+     * Utiliza email como chave para encontrar os pares email-id existentes, 
+     * por meio da ArvoreBMais e dos métodos do repositório de aeds3
+     * 
+     * @param email do registro a ser encontrado
+     * @return A entidade encontrada, ou null se não existir 
+     * @throws Exception Se houver erro ao deserializar ou ler do arquivo
+     */
     public Usuario buscarUsuarioPorEmail(String email) {
         try {
             String chave = normalizarEmail(email);
@@ -93,6 +101,7 @@ public class BancoDados implements AutoCloseable {
         try {
             usuario.setEmail(normalizarEmail(usuario.getEmail()));
             Usuario outro = buscarUsuarioPorEmail(usuario.getEmail());
+            // se hover usuário com o mesmo email não permite a modificação
             if (outro != null && outro.getIdUsuario() != usuario.getIdUsuario()) {
                 throw new IllegalArgumentException("E-mail já cadastrado.");
             }

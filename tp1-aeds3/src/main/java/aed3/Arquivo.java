@@ -47,7 +47,6 @@ public class Arquivo<T extends aed3.InterfaceRegistro> {
         }
     }
 
-
     /**
      * Cria um novo registro da entidade no arquivo de dados.
      * Incrementa o último ID e escreve a entidade serializada no arquivo.
@@ -152,6 +151,18 @@ public class Arquivo<T extends aed3.InterfaceRegistro> {
         return entidades;
     }
 
+    //    [Busca Endereço no Índice] ──► [Lê Registro Atual]
+    //                                     │
+    //                    ┌────────────────┴────────────────┐
+    //            (Novo cabe no espaço?)           (Novo é MAIOR)
+    //                    │                                 │
+    //                    ▼                                 ▼
+    //        [Sobrescreve no local]           [Marca antigo como excluído]
+    //        [Preenche sobra com 0s]                       │
+    //                                        [Reaproveita espaço vago OU]
+    //                                        [Grava no final do arquivo]
+    //                                                      │
+    //                                        [Atualiza Endereço no Índice]
 
     public boolean update(T entidadeAtualizada) throws Exception {
 
@@ -162,9 +173,10 @@ public class Arquivo<T extends aed3.InterfaceRegistro> {
             return false;
         }
 
-        // Lê o registro no arquivo de dados
         long pos = pIE.getEndereco();
-        arquivo.seek(pos);
+        arquivo.seek(pos);  
+        
+        // lendo os metadados sobre aquele registro
         boolean lapide = arquivo.readBoolean();
         int length = arquivo.readUnsignedShort();
         byte[] registro = new byte[length];
