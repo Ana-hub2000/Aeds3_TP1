@@ -5,6 +5,7 @@ import aed3.ArvoreBMais;
 import aed3.ParIdId;
 import br.pucminas.model.Pergunta;
 import br.pucminas.model.Usuario;
+import br.pucminas.persistence.ParDataId;
 import br.pucminas.persistence.ParEmailId;
 
 import java.nio.file.Files;
@@ -22,6 +23,7 @@ import java.util.Locale;
                            indice direto por ID em hash extensivel
   - ArvoreBMais<ParIdId>   -> indice indireto usuario -> perguntas
   - ArvoreBMais<ParEmailId>-> indice indireto e-mail -> usuario
+  - ArvoreBMais<ParDataId> -> (TP2) perguntas em ordem decrescente de data
 */
 public class BancoDados implements AutoCloseable {
 
@@ -31,6 +33,7 @@ public class BancoDados implements AutoCloseable {
     private final Arquivo<Pergunta> perguntas;
     private final ArvoreBMais<ParEmailId> indiceEmail;
     private final ArvoreBMais<ParIdId> indicePerguntasPorUsuario;
+    private final ArvoreBMais<ParDataId> indicePerguntasPorData;
 
     public BancoDados(Path diretorio) throws Exception {
         Files.createDirectories(diretorio);
@@ -43,6 +46,9 @@ public class BancoDados implements AutoCloseable {
                 ORDEM_ARVORE, diretorio.resolve("indiceEmail.bplus").toString());
         indicePerguntasPorUsuario = new ArvoreBMais<>(ParIdId.class.getConstructor(),
                 ORDEM_ARVORE, diretorio.resolve("indicePerguntas.bplus").toString());
+        indicePerguntasPorData = new ArvoreBMais<>(ParDataId.class.getConstructor(),
+                ORDEM_ARVORE, diretorio.resolve("indicePerguntasData.bplus").toString());
+
 
         reconstruirIndicesSeVazios();
     }
@@ -130,6 +136,9 @@ public class BancoDados implements AutoCloseable {
             perguntas.create(pergunta);
             indicePerguntasPorUsuario.create(
                     new ParIdId(pergunta.getIdUsuario(), pergunta.getIdPergunta()));
+            // TP2: índice por data (a data de criação nunca muda, então não há update)
+            indicePerguntasPorData.create(
+                    new ParDataId(pergunta.getCriacao(), pergunta.getIdPergunta()));
             return pergunta;
         } catch (IllegalArgumentException e) {
             throw e;
@@ -175,6 +184,35 @@ public class BancoDados implements AutoCloseable {
         }
     }
 
+    /** Lê uma pergunta pelo ID (null se não existir). */
+    public Pergunta buscarPergunta(int id) {
+        try {
+            return perguntas.read(id);
+        } catch (Exception e) {
+            throw falha("ler pergunta", e);
+        }
+    }
+
+    /**
+     * TP2 - Pessoa 1: todas as perguntas ATIVAS em ordem decrescente de data.
+     * A ordem vem direto da Árvore B+ (ParDataId tem compareTo decrescente);
+     * read(null) percorre todas as folhas encadeadas da esquerda para a direita.
+     */
+    public List<Pergunta> perguntasRecentes() {
+        try {
+            List<Pergunta> lista = new ArrayList<>();
+            for (ParDataId par : indicePerguntasPorData.read(null)) {
+                Pergunta pergunta = perguntas.read(par.getId());
+                if (pergunta != null && pergunta.isAtiva()) {
+                    lista.add(pergunta);
+                }
+            }
+            return lista;
+        } catch (Exception e) {
+            throw falha("listar perguntas recentes", e);
+        }
+    }
+
     // -------------------- apoio --------------------
 
     // Se os indices estiverem vazios (primeira execucao ou arquivo apagado),
@@ -190,6 +228,12 @@ public class BancoDados implements AutoCloseable {
             for (Pergunta pergunta : perguntas.readAll()) {
                 indicePerguntasPorUsuario.create(
                         new ParIdId(pergunta.getIdUsuario(), pergunta.getIdPergunta()));
+            }
+        }
+        if (indicePerguntasPorData.empty()) {
+            for (Pergunta pergunta : perguntas.readAll()) {
+                indicePerguntasPorData.create(
+                        new ParDataId(pergunta.getCriacao(), pergunta.getIdPergunta()));
             }
         }
     }
