@@ -4,6 +4,7 @@ import aed3.Arquivo;
 import aed3.ArvoreBMais;
 import aed3.ParIdId;
 import br.pucminas.model.Pergunta;
+import br.pucminas.model.Resposta;
 import br.pucminas.model.Usuario;
 import br.pucminas.persistence.ParDataId;
 import br.pucminas.persistence.ParEmailId;
@@ -35,6 +36,12 @@ public class BancoDados implements AutoCloseable {
     private final ArvoreBMais<ParIdId> indicePerguntasPorUsuario;
     private final ArvoreBMais<ParDataId> indicePerguntasPorData;
 
+    // TP2 - Pessoa 2: respostas e os dois indices do relacionamento N:N
+    private static final int MAX_CARACTERES_RESPOSTA = 20000;
+    private final Arquivo<Resposta> respostas;
+    private final ArvoreBMais<ParIdId> indiceRespostasPorPergunta;
+    private final ArvoreBMais<ParIdId> indiceRespostasPorUsuario;
+
     public BancoDados(Path diretorio) throws Exception {
         Files.createDirectories(diretorio);
         String base = diretorio.toString();
@@ -48,6 +55,13 @@ public class BancoDados implements AutoCloseable {
                 ORDEM_ARVORE, diretorio.resolve("indicePerguntas.bplus").toString());
         indicePerguntasPorData = new ArvoreBMais<>(ParDataId.class.getConstructor(),
                 ORDEM_ARVORE, diretorio.resolve("indicePerguntasData.bplus").toString());
+
+        // TP2 - Pessoa 2: respostas (arquivo + indices [idPergunta, idResposta] e [idUsuario, idResposta])
+        respostas = new Arquivo<>(base, "respostas", Resposta.class.getConstructor());
+        indiceRespostasPorPergunta = new ArvoreBMais<>(ParIdId.class.getConstructor(),
+                ORDEM_ARVORE, diretorio.resolve("indiceRespostasPorPergunta.bplus").toString());
+        indiceRespostasPorUsuario = new ArvoreBMais<>(ParIdId.class.getConstructor(),
+                ORDEM_ARVORE, diretorio.resolve("indiceRespostasPorUsuario.bplus").toString());
 
 
         reconstruirIndicesSeVazios();
@@ -213,6 +227,132 @@ public class BancoDados implements AutoCloseable {
         }
     }
 
+    // -------------------- respostas (TP2 - Pessoa 2) --------------------
+
+    /**
+     * Cria uma resposta para uma pergunta, escrita por um usuario.
+     * Valida o texto, o usuario e a pergunta (que precisa existir e estar ativa)
+     * e registra a resposta nos dois indices do relacionamento N:N.
+     */
+    public Resposta criarResposta(Resposta resposta) {
+        try {
+            String texto = resposta.getResposta();
+            if (texto == null || texto.isBlank()) {
+                throw new IllegalArgumentException("A resposta não pode ser vazia.");
+            }
+            if (texto.length() > MAX_CARACTERES_RESPOSTA) {
+                throw new IllegalArgumentException("Resposta longa demais (máximo de "
+                        + MAX_CARACTERES_RESPOSTA + " caracteres).");
+            }
+            if (buscarUsuario(resposta.getIdUsuario()) == null) {
+                throw new IllegalArgumentException("Usuário informado não existe.");
+            }
+            Pergunta pergunta = buscarPergunta(resposta.getIdPergunta());
+            if (pergunta == null || !pergunta.isAtiva()) {
+                throw new IllegalArgumentException("Pergunta informada não existe ou está arquivada.");
+            }
+            respostas.create(resposta);
+            indiceRespostasPorPergunta.create(
+                    new ParIdId(resposta.getIdPergunta(), resposta.getIdResposta()));
+            indiceRespostasPorUsuario.create(
+                    new ParIdId(resposta.getIdUsuario(), resposta.getIdResposta()));
+            return resposta;
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception e) {
+            throw falha("criar resposta", e);
+        }
+    }
+
+    /** Le uma resposta pelo ID, mesmo arquivada (null se nao existir). */
+    public Resposta buscarResposta(int id) {
+        try {
+            return respostas.read(id);
+        } catch (Exception e) {
+            throw falha("ler resposta", e);
+        }
+    }
+
+    /** Regrava uma resposta existente (usado para nota, avaliacoes e arquivamento). */
+    public void atualizarResposta(Resposta resposta) {
+        try {
+            if (!respostas.update(resposta)) {
+                throw new IllegalArgumentException("Resposta não encontrada.");
+            }
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception e) {
+            throw falha("atualizar resposta", e);
+        }
+    }
+
+    /**
+     * Respostas ATIVAS de uma pergunta, da maior nota para a menor
+     * (em caso de empate, a mais antiga primeiro). Usa a arvore B+ [idPergunta, idResposta].
+     */
+    public List<Resposta> respostasDaPergunta(int idPergunta) {
+        try {
+            List<Resposta> lista = new ArrayList<>();
+            for (ParIdId par : indiceRespostasPorPergunta.read(new ParIdId(idPergunta))) {
+                Resposta resposta = respostas.read(par.getId2());
+                if (resposta != null && resposta.isAtiva()) {
+                    lista.add(resposta);
+                }
+            }
+            lista.sort(Comparator.comparingInt(Resposta::getNota).reversed()
+                    .thenComparingLong(Resposta::getCriacao));
+            return lista;
+        } catch (Exception e) {
+            throw falha("listar respostas da pergunta", e);
+        }
+    }
+
+    /**
+     * Respostas ATIVAS escritas por um usuario, da mais recente para a mais antiga.
+     * Usa a arvore B+ [idUsuario, idResposta].
+     */
+    public List<Resposta> respostasDoUsuario(int idUsuario) {
+        try {
+            List<Resposta> lista = new ArrayList<>();
+            for (ParIdId par : indiceRespostasPorUsuario.read(new ParIdId(idUsuario))) {
+                Resposta resposta = respostas.read(par.getId2());
+                if (resposta != null && resposta.isAtiva()) {
+                    lista.add(resposta);
+                }
+            }
+            lista.sort(Comparator.comparingLong(Resposta::getCriacao).reversed());
+            return lista;
+        } catch (Exception e) {
+            throw falha("listar respostas do usuário", e);
+        }
+    }
+
+    /**
+     * Arquiva uma resposta (ativa = false; nada e apagado).
+     * Quem pode: o autor da resposta ou o autor da pergunta respondida.
+     */
+    public void arquivarResposta(int idResposta, int idUsuarioSolicitante) {
+        try {
+            Resposta resposta = respostas.read(idResposta);
+            if (resposta == null || !resposta.isAtiva()) {
+                throw new IllegalArgumentException("Resposta não encontrada.");
+            }
+            Pergunta pergunta = perguntas.read(resposta.getIdPergunta());
+            boolean autorDaResposta = resposta.getIdUsuario() == idUsuarioSolicitante;
+            boolean autorDaPergunta = pergunta != null
+                    && pergunta.getIdUsuario() == idUsuarioSolicitante;
+            if (!autorDaResposta && !autorDaPergunta) {
+                throw new IllegalArgumentException("Você não tem permissão para arquivar esta resposta.");
+            }
+            resposta.setAtiva(false);
+            respostas.update(resposta);
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception e) {
+            throw falha("arquivar resposta", e);
+        }
+    }
+
     // -------------------- apoio --------------------
 
     // Se os indices estiverem vazios (primeira execucao ou arquivo apagado),
@@ -236,6 +376,19 @@ public class BancoDados implements AutoCloseable {
                         new ParDataId(pergunta.getCriacao(), pergunta.getIdPergunta()));
             }
         }
+        // TP2 - Pessoa 2: indices das respostas
+        if (indiceRespostasPorPergunta.empty()) {
+            for (Resposta resposta : respostas.readAll()) {
+                indiceRespostasPorPergunta.create(
+                        new ParIdId(resposta.getIdPergunta(), resposta.getIdResposta()));
+            }
+        }
+        if (indiceRespostasPorUsuario.empty()) {
+            for (Resposta resposta : respostas.readAll()) {
+                indiceRespostasPorUsuario.create(
+                        new ParIdId(resposta.getIdUsuario(), resposta.getIdResposta()));
+            }
+        }
     }
 
     public static String normalizarEmail(String email) {
@@ -250,5 +403,6 @@ public class BancoDados implements AutoCloseable {
     public void close() throws Exception {
         usuarios.close();
         perguntas.close();
+        respostas.close();
     }
 }

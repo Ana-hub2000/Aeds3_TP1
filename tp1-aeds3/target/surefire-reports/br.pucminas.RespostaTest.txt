@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: br.pucminas.RespostaTest
+-------------------------------------------------------------------------------
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.272 s - in br.pucminas.RespostaTest
