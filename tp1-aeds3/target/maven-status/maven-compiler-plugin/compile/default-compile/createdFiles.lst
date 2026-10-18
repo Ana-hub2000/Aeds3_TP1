@@ -3,6 +3,7 @@ br\pucminas\persistence\TabelaHashExtensivel$Entry.class
 aed3\Arquivo.class
 aed3\ArvoreBMais$Pagina.class
 aed3\InterfaceHashExtensivel.class
+br\pucminas\model\Resposta.class
 aed3\HashExtensivel$Cesto.class
 br\pucminas\persistence\ArvoreBMais.class
 aed3\InterfaceArvoreBMais.class
