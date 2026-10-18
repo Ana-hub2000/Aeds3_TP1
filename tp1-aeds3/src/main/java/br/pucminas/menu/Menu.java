@@ -222,11 +222,101 @@ public class Menu {
             moldura("Menu principal", "1 - Minha área", "2 - Buscar perguntas", "0 - Sair");
             switch (opcao()) {
                 case 1 -> minhaArea(usuario);
-                case 2 -> System.out.println("A busca global ainda não foi implementada.");
+                case 2 -> buscarPerguntas();
                 case 0 -> continuar = false;
                 default -> erro("Opção inválida.");
             }
         }
+    }
+
+    // ==================== TP2 - Pessoa 1: busca e paginação ====================
+
+    private static final int POR_PAGINA = 5;
+
+    /** Menu de busca: A = mais recentes, B = palavras-chave (outra etapa). */
+    private void buscarPerguntas() {
+        while (true) {
+            limparTela();
+            moldura("Buscar perguntas", "A - Perguntas mais recentes",
+                    "B - Buscar por palavras-chave", "0 - Voltar");
+            System.out.print("Opção: ");
+            String op = entrada.nextLine().trim().toUpperCase();
+            switch (op) {
+                case "A" -> listarRecentesPaginado();
+                case "B" -> { erro("Busca por palavras-chave ainda não implementada."); aguardar(); }
+                case "0" -> { return; }
+                default -> { erro("Opção inválida."); aguardar(); }
+            }
+        }
+    }
+
+    /** Lista as perguntas (ordem decrescente da Árvore B+), 5 por página. */
+    private void listarRecentesPaginado() {
+        List<Pergunta> todas = banco.perguntasRecentes();
+        int totalPaginas = Math.max(1, (todas.size() + POR_PAGINA - 1) / POR_PAGINA);
+        int pagina = 0;
+        while (true) {
+            limparTela();
+            int ini = pagina * POR_PAGINA;
+            int fim = Math.min(ini + POR_PAGINA, todas.size());
+            List<String> linhas = new ArrayList<>();
+            if (todas.isEmpty()) {
+                linhas.add("Nenhuma pergunta cadastrada.");
+            }
+            for (int i = ini; i < fim; i++) {
+                Pergunta p = todas.get(i);
+                linhas.add("[ID " + p.getIdPergunta() + "] " + p.getPergunta());
+                linhas.add("   " + DATA.format(Instant.ofEpochMilli(p.getCriacao()))
+                        + " | Nota: " + p.getNota());
+            }
+            linhas.add("");
+            linhas.add("Página " + (pagina + 1) + " de " + totalPaginas);
+            linhas.add("> - Próxima | < - Anterior | ID - Ver detalhes | 0 - Voltar");
+            moldura("Perguntas mais recentes", linhas);
+            System.out.print("Opção: ");
+            String op = entrada.nextLine().trim();
+            if (op.equals("0")) return;
+            if (op.equals(">")) {
+                if (pagina < totalPaginas - 1) pagina++; else { erro("Já está na última página."); aguardar(); }
+            } else if (op.equals("<")) {
+                if (pagina > 0) pagina--; else { erro("Já está na primeira página."); aguardar(); }
+            } else {
+                try {
+                    mostrarDetalhes(Integer.parseInt(op));
+                } catch (NumberFormatException e) {
+                    erro("Opção inválida.");
+                    aguardar();
+                }
+            }
+        }
+    }
+
+    /** Mostra todos os dados de uma pergunta e, abaixo, suas respostas. */
+    private void mostrarDetalhes(int id) {
+        Pergunta p = banco.buscarPergunta(id);
+        if (p == null || !p.isAtiva()) {
+            erro("Pergunta não encontrada.");
+            aguardar();
+            return;
+        }
+        Usuario autor = banco.buscarUsuario(p.getIdUsuario());
+        limparTela();
+        moldura("Pergunta #" + p.getIdPergunta(),
+                p.getPergunta(), "",
+                "Autor: " + (autor == null ? "desconhecido" : autor.getNome()),
+                "Criada: " + DATA.format(Instant.ofEpochMilli(p.getCriacao())),
+                "Alterada: " + DATA.format(Instant.ofEpochMilli(p.getAlteracao())),
+                "Palavras-chave: " + p.getPalavrasChave(),
+                "Nota: " + p.getNota());
+        listarRespostasDaPergunta(id);
+        System.out.print("Enter para voltar...");
+        entrada.nextLine();
+    }
+
+    /** PLACEHOLDER - será implementado pela pessoa responsável pelas Respostas. */
+    private void listarRespostasDaPergunta(int idPergunta) {
+        // TODO (Pessoa 2/3): listar as respostas da pergunta idPergunta
+        System.out.println("(Respostas: em implementação)");
     }
 
     private void minhaArea(Usuario usuario) {
