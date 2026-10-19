@@ -423,24 +423,142 @@ private void listarRespostasDaPergunta(int idPergunta, Usuario usuario) {
             switch (opcao()) {
                 case 1 -> meusDados(usuario);
                 case 2 -> minhasPerguntas(usuario);
-                case 3 -> System.out.println("Esta funcionalidade ainda não foi implementada.");
+               case 3 -> minhasRespostas(usuario);
                case 4 -> minhasAvaliacoes(usuario);
                 case 0 -> continuar = false;
                 default -> erro("Opção inválida.");
             }
         }
     }
+
+
+  
+private void minhasRespostas(Usuario usuario) {
+    while (true) {
+        List<Resposta> respostas = banco.respostasDoUsuario(usuario.getIdUsuario());
+        List<String> linhas = new ArrayList<>();
+
+        if (respostas.isEmpty()) {
+            linhas.add("Você ainda não possui respostas ativas.");
+        }
+
+        for (int i = 0; i < respostas.size(); i++) {
+            Resposta resposta = respostas.get(i);
+            Pergunta pergunta = banco.buscarPergunta(resposta.getIdPergunta());
+
+            linhas.add((i + 1) + ". " + resposta.getResposta());
+            linhas.add("   Pergunta: " +
+                    (pergunta == null ? "Não encontrada" : pergunta.getPergunta()));
+            linhas.add("   Nota: " + resposta.getNota()
+                    + " | Avaliações: " + resposta.getAvaliacoes());
+        }
+
+        linhas.add("");
+        linhas.add("D - Ver detalhes de uma resposta");
+        linhas.add("A - Arquivar uma resposta");
+        linhas.add("R - Voltar");
+
+        limparTela();
+        moldura("Minhas respostas", linhas);
+        System.out.print("Opção: ");
+
+        String op = entrada.nextLine().trim().toUpperCase();
+
+        if (op.equals("R")) {
+            return;
+        }
+
+        if (!op.equals("D") && !op.equals("A")) {
+            erro("Opção inválida.");
+            aguardar();
+            continue;
+        }
+
+        if (respostas.isEmpty()) {
+            erro("Não há respostas disponíveis.");
+            aguardar();
+            continue;
+        }
+
+        int n = inteiro("Número da resposta (0 para voltar): ");
+
+        if (n == 0) {
+            continue;
+        }
+
+        if (n < 1 || n > respostas.size()) {
+            erro("Resposta inválida.");
+            aguardar();
+            continue;
+        }
+
+        Resposta resposta = respostas.get(n - 1);
+        Pergunta pergunta = banco.buscarPergunta(resposta.getIdPergunta());
+
+        if (op.equals("D")) {
+            List<String> detalhes = new ArrayList<>();
+            detalhes.add("Pergunta: " +
+                    (pergunta == null ? "Não encontrada" : pergunta.getPergunta()));
+            detalhes.add("");
+            detalhes.add("Sua resposta:");
+            detalhes.addAll(quebrar(resposta.getResposta(), 60));
+            detalhes.add("");
+            detalhes.add("Nota: " + resposta.getNota());
+            detalhes.add("Avaliações: " + resposta.getAvaliacoes());
+
+            limparTela();
+            moldura("Detalhes da resposta #" + resposta.getIdResposta(), detalhes);
+            aguardar();
+        } else {
+            System.out.print("Confirma o arquivamento? (S/N): ");
+            String confirmar = entrada.nextLine().trim();
+
+            if (confirmar.equalsIgnoreCase("S")) {
+                try {
+                    banco.arquivarResposta(
+                            resposta.getIdResposta(),
+                            usuario.getIdUsuario()
+                    );
+                    sucesso("Resposta arquivada. O registro não foi excluído.");
+                } catch (IllegalArgumentException e) {
+                    erro(e.getMessage());
+                }
+
+                aguardar();
+            }
+        }
+    }
+}
+
+
+
+
+
+
     private void minhasAvaliacoes(Usuario usuario) {
     while (true) {
         List<Avaliacao> lista = banco.avaliacoesDoUsuario(usuario.getIdUsuario());
         List<String> linhas = new ArrayList<>();
         if (lista.isEmpty()) linhas.add("Você ainda não avaliou nenhuma resposta.");
         for (int i = 0; i < lista.size(); i++) {
-            Avaliacao a = lista.get(i);
-            Resposta r = banco.buscarResposta(a.get_IdResposta());
-            linhas.add("(" + (i + 1) + ") " + (r == null ? "(resposta não encontrada)" : quebrar(r.getResposta(), 50).get(0)));
-            linhas.add("    " + (a.get_avaliacao() ? "Positiva" : "Negativa"));
-        }
+    Avaliacao a = lista.get(i);
+    Resposta r = banco.buscarResposta(a.get_IdResposta());
+
+    linhas.add("(" + (i + 1) + ") " +
+            (a.get_avaliacao() ? "Concordo" : "Discordo"));
+
+    if (r == null) {
+        linhas.add("    Resposta não encontrada.");
+        continue;
+    }
+
+    Pergunta pergunta = banco.buscarPergunta(r.getIdPergunta());
+
+    linhas.add("    Pergunta: " +
+            (pergunta == null ? "Não encontrada" : pergunta.getPergunta()));
+    linhas.add("    Resposta: " + r.getResposta());
+    linhas.add("    Nota atual da resposta: " + r.getNota());
+}
         linhas.add("");
         linhas.add("(C) Cancelar uma avaliação");
         linhas.add("(R) Retornar");
@@ -651,12 +769,14 @@ aguardar();
             linhas.add("1 - Incluir pergunta");
             linhas.add("2 - Alterar pergunta");
             linhas.add("3 - Arquivar pergunta");
+            linhas.add("4 - Ver respostas recebidas");
             linhas.add("0 - Voltar");
             moldura("Minhas perguntas", linhas);
             switch (opcao()) {
                 case 1 -> incluirPergunta(usuario);
                 case 2 -> editarPergunta(perguntas);
                 case 3 -> arquivarPergunta(perguntas);
+                case 4 -> respostasRecebidasDaPergunta(perguntas, usuario);
                 case 0 -> continuar = false;
                 default -> erro("Opção inválida.");
             }
@@ -774,4 +894,104 @@ if (respostas.isEmpty()) {
             erro("Este campo é obrigatório.");
         }
     }
+
+
+    
+private void respostasRecebidasDaPergunta(
+        List<Pergunta> perguntas, Usuario usuario) {
+
+    Pergunta pergunta = selecionarPergunta(perguntas);
+
+    if (pergunta == null) {
+        return;
+    }
+
+    while (true) {
+        List<Resposta> respostas =
+                banco.respostasDaPergunta(pergunta.getIdPergunta());
+
+        List<String> linhas = new ArrayList<>();
+        linhas.add("Pergunta: " + pergunta.getPergunta());
+        linhas.add("");
+
+        if (respostas.isEmpty()) {
+            linhas.add("Esta pergunta ainda não recebeu respostas ativas.");
+        }
+
+        for (int i = 0; i < respostas.size(); i++) {
+            Resposta resposta = respostas.get(i);
+            Usuario autor = banco.buscarUsuario(resposta.getIdUsuario());
+
+            linhas.add((i + 1) + ". " + resposta.getResposta());
+            linhas.add("   Autor: " +
+                    (autor == null ? "Desconhecido" : autor.getNome()));
+            linhas.add("   Nota: " + resposta.getNota()
+                    + " | Avaliações: " + resposta.getAvaliacoes());
+        }
+
+        linhas.add("");
+        linhas.add("A - Arquivar resposta de outro usuário");
+        linhas.add("R - Voltar");
+
+        limparTela();
+        moldura("Respostas recebidas", linhas);
+        System.out.print("Opção: ");
+
+        String op = entrada.nextLine().trim().toUpperCase();
+
+        if (op.equals("R")) {
+            return;
+        }
+
+        if (!op.equals("A")) {
+            erro("Opção inválida.");
+            aguardar();
+            continue;
+        }
+
+        if (respostas.isEmpty()) {
+            erro("Não há respostas disponíveis.");
+            aguardar();
+            continue;
+        }
+
+        int n = inteiro("Número da resposta (0 para voltar): ");
+
+        if (n == 0) {
+            continue;
+        }
+
+        if (n < 1 || n > respostas.size()) {
+            erro("Resposta inválida.");
+            aguardar();
+            continue;
+        }
+
+        Resposta resposta = respostas.get(n - 1);
+
+        if (resposta.getIdUsuario() == usuario.getIdUsuario()) {
+            erro("Nesta tela, você só pode arquivar respostas de outros usuários.");
+            aguardar();
+            continue;
+        }
+
+        System.out.print("Confirma o arquivamento? (S/N): ");
+        String confirmar = entrada.nextLine().trim();
+
+        if (confirmar.equalsIgnoreCase("S")) {
+            try {
+                banco.arquivarResposta(
+                        resposta.getIdResposta(),
+                        usuario.getIdUsuario()
+                );
+                sucesso("Resposta arquivada.");
+            } catch (IllegalArgumentException e) {
+                erro(e.getMessage());
+            }
+
+            aguardar();
+        }
+    }
+}
+
 }
