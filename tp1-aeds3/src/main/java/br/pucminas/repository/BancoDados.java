@@ -1,20 +1,21 @@
 package br.pucminas.repository;
 
-import aed3.Arquivo;
-import aed3.ArvoreBMais;
-import aed3.ParIdId;
-import br.pucminas.model.Pergunta;
-import br.pucminas.model.Resposta;
-import br.pucminas.model.Usuario;
-import br.pucminas.persistence.ParDataId;
-import br.pucminas.persistence.ParEmailId;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+
+import aed3.Arquivo;
+import aed3.ArvoreBMais;
+import aed3.ParIdId;
+import br.pucminas.model.Avaliacao;
+import br.pucminas.model.Pergunta;
+import br.pucminas.model.Resposta;
+import br.pucminas.model.Usuario;
+import br.pucminas.persistence.ParDataId;
+import br.pucminas.persistence.ParEmailId;
 
 /*
  Camada de acesso a dados.
@@ -36,11 +37,15 @@ public class BancoDados implements AutoCloseable {
     private final ArvoreBMais<ParIdId> indicePerguntasPorUsuario;
     private final ArvoreBMais<ParDataId> indicePerguntasPorData;
 
-    // TP2 - Pessoa 2: respostas e os dois indices do relacionamento N:N
+    // respostas e os dois indices do relacionamento N:N
     private static final int MAX_CARACTERES_RESPOSTA = 20000;
     private final Arquivo<Resposta> respostas;
     private final ArvoreBMais<ParIdId> indiceRespostasPorPergunta;
     private final ArvoreBMais<ParIdId> indiceRespostasPorUsuario;
+    //  avaliações
+    private final Arquivo<Avaliacao> avaliacoes;
+    private final ArvoreBMais<ParIdId> indiceAvaliacoesPorUsuario;
+    private final ArvoreBMais<ParIdId> indiceAvaliacoesPorResposta;
 
     public BancoDados(Path diretorio) throws Exception {
         Files.createDirectories(diretorio);
@@ -62,7 +67,21 @@ public class BancoDados implements AutoCloseable {
                 ORDEM_ARVORE, diretorio.resolve("indiceRespostasPorPergunta.bplus").toString());
         indiceRespostasPorUsuario = new ArvoreBMais<>(ParIdId.class.getConstructor(),
                 ORDEM_ARVORE, diretorio.resolve("indiceRespostasPorUsuario.bplus").toString());
+        avaliacoes = new Arquivo<>(
+        base, "avaliacoes", Avaliacao.class.getConstructor()
+);
 
+indiceAvaliacoesPorUsuario = new ArvoreBMais<>(
+        ParIdId.class.getConstructor(),
+        ORDEM_ARVORE,
+        diretorio.resolve("indiceAvaliacoesPorUsuario.bplus").toString()
+);
+
+indiceAvaliacoesPorResposta = new ArvoreBMais<>(
+        ParIdId.class.getConstructor(),
+        ORDEM_ARVORE,
+        diretorio.resolve("indiceAvaliacoesPorResposta.bplus").toString()
+);
 
         reconstruirIndicesSeVazios();
     }
@@ -352,7 +371,29 @@ public class BancoDados implements AutoCloseable {
             throw falha("arquivar resposta", e);
         }
     }
-
+    public Avaliacao criarAvaliacao(Avaliacao a) {
+    try {
+        if (buscarUsuario(a.get_IdUsuario()) == null) throw new IllegalArgumentException("Usuário informado não existe.");
+        Resposta r = buscarResposta(a.get_IdResposta());
+        if (r == null || !r.isAtiva()) throw new IllegalArgumentException("Resposta não encontrada.");
+        if (r.getIdUsuario() == a.get_IdUsuario()) throw new IllegalArgumentException("Você não pode avaliar a sua própria resposta.");
+        for (ParIdId par : indiceAvaliacoesPorUsuario.read(new ParIdId(a.get_IdUsuario()))) {
+            Avaliacao x = avaliacoes.read(par.getId2());
+            if (x != null && x.get_IdResposta() == a.get_IdResposta()) throw new IllegalArgumentException("Você já avaliou esta resposta.");
+        }
+        avaliacoes.create(a);
+        indiceAvaliacoesPorUsuario.create(new ParIdId(a.get_IdUsuario(), a.getId()));
+        indiceAvaliacoesPorResposta.create(new ParIdId(a.get_IdResposta(), a.getId()));
+        r.setNota((short) (r.getNota() + (a.get_avaliacao() ? 1 : -1)));
+        r.setAvaliacoes((short) (r.getAvaliacoes() + 1));
+        respostas.update(r);
+        return a;
+    } catch (IllegalArgumentException e) {
+        throw e;
+    } catch (Exception e) {
+        throw falha("criar avaliação", e);
+    }
+}
     // -------------------- apoio --------------------
 
     // Se os indices estiverem vazios (primeira execucao ou arquivo apagado),
@@ -389,8 +430,42 @@ public class BancoDados implements AutoCloseable {
                         new ParIdId(resposta.getIdUsuario(), resposta.getIdResposta()));
             }
         }
+        if (indiceAvaliacoesPorUsuario.empty()) for (Avaliacao a : avaliacoes.readAll()) indiceAvaliacoesPorUsuario.create(new ParIdId(a.get_IdUsuario(), a.getId()));
+        if (indiceAvaliacoesPorResposta.empty()) for (Avaliacao a : avaliacoes.readAll()) indiceAvaliacoesPorResposta.create(new ParIdId(a.get_IdResposta(), a.getId()));
     }
 
+    public List<Avaliacao> avaliacoesDoUsuario(int idUsuario) {
+    try {
+        List<Avaliacao> lista = new ArrayList<>();
+        for (ParIdId par : indiceAvaliacoesPorUsuario.read(new ParIdId(idUsuario))) {
+            Avaliacao a = avaliacoes.read(par.getId2());
+            if (a != null) lista.add(a);
+        }
+        return lista;
+    } catch (Exception e) {
+        throw falha("listar avaliações do usuário", e);
+    }
+}
+
+public void cancelarAvaliacao(int idAvaliacao, int idUsuario) {
+    try {
+        Avaliacao a = avaliacoes.read(idAvaliacao);
+        if (a == null || a.get_IdUsuario() != idUsuario) throw new IllegalArgumentException("Avaliação não encontrada.");
+        Resposta r = respostas.read(a.get_IdResposta());
+        avaliacoes.delete(idAvaliacao);
+        indiceAvaliacoesPorUsuario.delete(new ParIdId(a.get_IdUsuario(), a.getId()));
+        indiceAvaliacoesPorResposta.delete(new ParIdId(a.get_IdResposta(), a.getId()));
+        if (r != null) {
+            r.setNota((short) (r.getNota() - (a.get_avaliacao() ? 1 : -1)));
+            r.setAvaliacoes((short) (r.getAvaliacoes() - 1));
+            respostas.update(r);
+        }
+    } catch (IllegalArgumentException e) {
+        throw e;
+    } catch (Exception e) {
+        throw falha("cancelar avaliação", e);
+    }
+}
     public static String normalizarEmail(String email) {
         return email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
     }
@@ -404,5 +479,17 @@ public class BancoDados implements AutoCloseable {
         usuarios.close();
         perguntas.close();
         respostas.close();
+        avaliacoes.close();
     }
+
+
+    //      metodos de avaliação 
+    public Avaliacao buscarAvaliacao(int id) {
+    try {
+        return avaliacoes.read(id);
+    } catch (Exception e) {
+        throw falha("buscar avaliação", e);
+    }
+}
+
 }
