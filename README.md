@@ -1,8 +1,10 @@
-# Relatório do Trabalho Prático 1 — AEDS III
+### Trabalho Prático AEDS III — Sistema Ajuda Aí 1.0
 
-### Sistema Ajuda Aí 1.0
+# Parte 1 — Relacionamento 1:N
 
 ### Participantes
+
+<center>
 
 | Nome completo | Matrícula |
 | --- | --- |
@@ -11,6 +13,7 @@
 | Eduardo Borges de Souza | 890309 |
 | Rian Chaves Pimenta | 898910 |
 
+</center>
 
 - **Turma:** (8203100) Algoritmos e Estruturas de Dados III
 - **Professor:** Marcos André Silveira Kutova
@@ -254,3 +257,85 @@ mvn exec:java
 
 > Caso necessário obtenha o Maven acessando o site https://maven.apache.org/download.cgi e baixando o pacote 	`apache-maven-3.9.16-bin.zip`  \
 > Certifique-se que a variável de sistema `mvn` esteja configurada na máquina referenciando a pasta `bin`.
+
+# Parte 2 — Relacionamento N:N
+
+## 1. Funcionalidades implementadas
+
+Evoluindo o sistema “Ajuda Aí 1.0”. O TP2 acrescenta respostas, avaliações e a busca de perguntas.
+
+### 1.1 Listagem de perguntas mais recentes (menu B → A)
+
+* Novo índice na entidade Pergunta, por data de criação em ordem decrescente.
+* Paginação de 5 em 5, com “Página anterior” e “Próxima página”.
+* Ao escolher uma pergunta, aparecem seus dados e as respostas ordenadas por nota (decrescente).
+* A busca por palavras-chave (opção B) fica para outro TP.
+
+### 1.2 Entidade Resposta 
+
+* `idResposta` 
+* `idPergunta` 
+* `idUsuario` 
+* `criacao` (long, em milissegundos) 
+* `resposta` (texto) 
+* `nota` (short) 
+* `avaliacoes` (short)
+* `ativa` (boolean)
+
+    * Respostas não são excluídas, apenas arquivadas (`ativa = false`).
+    * Não podem ser editadas. Se o usuário errar, arquiva e cria outra.
+    * O relacionamento N:N usa duas árvores B+: (`idPergunta`, `idResposta`) e (`idUsuario`, `idResposta`).
+
+### 1.3 Entidade Avaliação 
+
+* `idAvaliacao` 
+* `idUsuario` 
+* `idResposta` 
+* `avaliacao` (`true = concordo`, `false = discordo`).
+
+    * Concordar soma 1 na nota da resposta, discordar subtrai 1, e avaliacoes sempre soma 1. Esses ajustes são feitos na entidade Resposta.
+    * O mesmo usuário não pode avaliar a mesma resposta duas vezes.
+    * O texto também fala em árvores B+ para as avaliações, “o mesmo” que foi feito para respostas. Isso sugere (idUsuario, idAvaliacao) e (idResposta, idAvaliacao).
+
+### 1.4 Telas de uma resposta
+
+* Se for do próprio usuário, só aparece “Arquivar resposta”.
+* Se for de outro, aparecem “Concordar” e “Discordar”.
+
+### 1.5 Área do usuário
+
+* **Minhas respostas**: lista as respostas dele. Ao selecionar uma, mostra a pergunta e a resposta, com a opção de arquivar.
+* **Minhas avaliações**: lista as respostas que ele avaliou. Ao selecionar uma, mostra a pergunta, a resposta e a avaliação feita, com a opção de cancelar a avaliação. Cancelar desfaz o efeito na nota e em avaliacoes. Para mudar uma avaliação, o usuário cancela e avalia de novo.
+* **Minhas perguntas**: passa a mostrar também as respostas de outros usuários, e o autor da pergunta pode arquivar uma delas.
+
+## Checklist
+
+**Há uma listagem paginada de perguntas, que mostra as perguntas em ordem decrescente de data a partir de uma Árvore B+ acrescentada ao CRUD de Perguntas?**
+
+**Sim.** Foi criada a classe `ParDataId` (data de criação `long` + `idPergunta` `int`, 12 bytes fixos), cujo `compareTo` é invertido na data. Assim, a pergunta mais recente fica na primeira folha da `ArvoreBMais<ParDataId>` (arquivo `indicePerguntasData.bplus`), adicionada ao `BancoDados` junto do CRUD de perguntas. Toda pergunta criada é inserida nesse índice e, se o arquivo estiver vazio, o índice é reconstruído a partir dos registros. O método `perguntasRecentes()` percorre as folhas encadeadas da árvore (`read(null)`) e já recebe os IDs em ordem decrescente, sem ordenação em memória; depois lê cada pergunta pelo CRUD e descarta as arquivadas. No menu "Buscar perguntas → A", a listagem mostra 5 perguntas por página, com `>` (próxima), `<` (anterior), `0` (voltar) e a digitação do ID para ver os detalhes completos.
+
+**Há uma listagem das respostas a uma pergunta selecionada, em ordem decrescente de nota?**
+
+**O usuário pode responder a uma pergunta?**
+
+**O usuário pode arquivar a própria resposta?**
+
+**O usuário pode avaliar uma resposta?**
+
+**Na área do usuário, o usuário pode visualizar as respostas às suas perguntas?**
+
+**Na área do usuário, o usuário pode arquivar uma resposta de outro usuário a uma das suas perguntas?**
+
+**Na área do usuário, o usuário pode visualizar e arquivar as respostas que escreveu?**
+
+**Na área do usuário, o usuário pode visualizar e arquivar a avaliação que realizou em uma resposta?**
+
+**A integridade do relacionamento entre perguntas e respostas está mantida em todas as operações?**
+
+**A integridade do relacionamento entre respostas e avaliações está mantida em todas as operações?**
+
+**O trabalho compila corretamente?**
+
+**O trabalho está completo e funcionando sem erros de execução?**
+
+**O trabalho é original e não a cópia de um trabalho de outro grupo?**
