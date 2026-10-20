@@ -315,27 +315,42 @@ Evoluindo o sistema “Ajuda Aí 1.0”. O TP2 acrescenta respostas, avaliaçõe
 **Sim.** Foi criada a classe `ParDataId` (data de criação `long` + `idPergunta` `int`, 12 bytes fixos), cujo `compareTo` é invertido na data. Assim, a pergunta mais recente fica na primeira folha da `ArvoreBMais<ParDataId>` (arquivo `indicePerguntasData.bplus`), adicionada ao `BancoDados` junto do CRUD de perguntas. Toda pergunta criada é inserida nesse índice e, se o arquivo estiver vazio, o índice é reconstruído a partir dos registros. O método `perguntasRecentes()` percorre as folhas encadeadas da árvore (`read(null)`) e já recebe os IDs em ordem decrescente, sem ordenação em memória; depois lê cada pergunta pelo CRUD e descarta as arquivadas. No menu "Buscar perguntas → A", a listagem mostra 5 perguntas por página, com `>` (próxima), `<` (anterior), `0` (voltar) e a digitação do ID para ver os detalhes completos.
 
 **Há uma listagem das respostas a uma pergunta selecionada, em ordem decrescente de nota?**
+**Sim.** Ao selecionar uma pergunta, o sistema recupera as respostas relacionadas a ela e as apresenta em ordem decrescente de nota. Dessa forma, as respostas com maior pontuação aparecem primeiro. A entidade `Resposta` possui os campos `nota` e `avaliacoes`, utilizados durante o processo de avaliação.
+
 
 **O usuário pode responder a uma pergunta?**
+**Sim.** O sistema permite que um usuário autenticado selecione uma pergunta e cadastre uma resposta. A resposta é associada ao usuário que a criou por meio do `idUsuario` e à pergunta respondida por meio do `idPergunta`, permitindo identificar o autor e a pergunta à qual a resposta pertence.
 
 **O usuário pode arquivar a própria resposta?**
+**Sim.** O usuário pode arquivar uma resposta criada por ele. O sistema não remove fisicamente o registro; em vez disso, altera o campo `ativa` para `false`, mantendo o registro armazenado. As respostas não podem ser editadas; caso seja necessário corrigir uma resposta, ela pode ser arquivada e uma nova resposta pode ser criada.
 
 **O usuário pode avaliar uma resposta?**
+**Sim.** O usuário pode avaliar uma resposta utilizando as opções de concordar ou discordar. A entidade `Avaliacao` registra o `idUsuario`, o `idResposta` e o valor da avaliação. Ao concordar, a nota da resposta é incrementada; ao discordar, a nota é decrementada. A quantidade de avaliações também é atualizada, e o mesmo usuário não pode avaliar a mesma resposta mais de uma vez.
 
 **Na área do usuário, o usuário pode visualizar as respostas às suas perguntas?**
+**Sim.** Na área do usuário, a opção **Minhas perguntas** permite visualizar as perguntas cadastradas pelo usuário e as respostas feitas por outros usuários. Dessa forma, o autor consegue acompanhar as respostas recebidas para suas próprias perguntas.
 
 **Na área do usuário, o usuário pode arquivar uma resposta de outro usuário a uma das suas perguntas?**
+**Sim.** O autor de uma pergunta pode selecionar uma resposta feita por outro usuário e arquivá-la. O arquivamento altera o estado da resposta para inativa, por meio do campo `ativa`, sem apagar fisicamente o registro do arquivo.
 
 **Na área do usuário, o usuário pode visualizar e arquivar as respostas que escreveu?**
+**Sim.** A área **Minhas respostas** lista as respostas criadas pelo usuário. Ao selecionar uma resposta, o sistema apresenta a pergunta correspondente e o conteúdo da resposta, além de disponibilizar a opção de arquivamento. As respostas não são editadas; caso seja necessário corrigir uma resposta, ela pode ser arquivada e uma nova resposta pode ser criada.
 
 **Na área do usuário, o usuário pode visualizar e arquivar a avaliação que realizou em uma resposta?**
+**Sim.** A área **Minhas avaliações** permite visualizar as avaliações realizadas pelo usuário, mostrando a pergunta, a resposta avaliada e a avaliação registrada. Também é possível cancelar uma avaliação. Ao cancelar, o efeito da avaliação é desfeito na nota da resposta e na quantidade de avaliações. Para alterar uma avaliação, o usuário pode cancelar a avaliação anterior e realizar uma nova avaliação.
 
 **A integridade do relacionamento entre perguntas e respostas está mantida em todas as operações?**
+**Sim.** A entidade `Resposta` mantém tanto o `idPergunta`, que identifica a pergunta respondida, quanto o `idUsuario`, que identifica o autor da resposta. Além disso, o relacionamento entre perguntas e respostas é mantido por duas Árvores B+: `(idPergunta, idResposta)` e `(idUsuario, idResposta)`. Esses índices permitem localizar as respostas associadas a uma determinada pergunta e também as respostas pertencentes a um determinado usuário.
 
 **A integridade do relacionamento entre respostas e avaliações está mantida em todas as operações?**
+**Sim.** Cada avaliação possui um `idUsuario` e um `idResposta`, permitindo identificar quem realizou a avaliação e qual resposta foi avaliada. O sistema também impede que o mesmo usuário avalie a mesma resposta mais de uma vez. Quando uma avaliação é cancelada, o efeito correspondente é removido da nota e da quantidade de avaliações da resposta, mantendo os dados relacionados consistentes.
 
 **O trabalho compila corretamente?**
+**Sim.** O projeto utiliza Java 19 e Maven. Os testes automatizados podem ser executados por meio do comando `mvn test`, e a execução dos testes é concluída com sucesso, indicando que o projeto compila corretamente.
 
 **O trabalho está completo e funcionando sem erros de execução?**
+**Sim.** Dentro do escopo definido para esta etapa, foram implementadas as funcionalidades de listagem paginada das perguntas, cadastro e gerenciamento de respostas, avaliação das respostas e gerenciamento dessas informações na área do usuário. Também foram implementadas as estruturas de Árvores B+ necessárias para os relacionamentos entre as entidades.
+
 
 **O trabalho é original e não a cópia de um trabalho de outro grupo?**
+**Sim.** O trabalho foi desenvolvido pelo grupo com base nos requisitos e conteúdos apresentados na disciplina. As implementações foram realizadas especificamente para o projeto **Ajuda Aí**, utilizando as estruturas e conceitos trabalhados durante a disciplina. O grupo também contou com inteligência artificial como ferramenta de apoio durante o desenvolvimento, sem que isso caracterize a cópia de um trabalho de outro grupo.
