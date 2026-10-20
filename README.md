@@ -2,10 +2,10 @@
 
 # Parte 1 — Relacionamento 1:N
 
+<div align="center">
+
 ### Participantes
-
-<center>
-
+    
 | Nome completo | Matrícula |
 | --- | --- |
 | Ana Flávia Menezes de Almeida | 8976988 |
@@ -13,7 +13,7 @@
 | Eduardo Borges de Souza | 890309 |
 | Rian Chaves Pimenta | 898910 |
 
-</center>
+</div>
 
 - **Turma:** (8203100) Algoritmos e Estruturas de Dados III
 - **Professor:** Marcos André Silveira Kutova
