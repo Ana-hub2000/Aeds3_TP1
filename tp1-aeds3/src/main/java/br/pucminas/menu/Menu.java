@@ -1,19 +1,16 @@
 package br.pucminas.menu;
+
+import br.pucminas.model.Pergunta;
+import br.pucminas.model.Usuario;
+import br.pucminas.repository.BancoDados;
+import br.pucminas.security.Seguranca;
+
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-
-import br.pucminas.model.Avaliacao;
-import br.pucminas.model.Pergunta;
-import br.pucminas.model.Resposta;
-import br.pucminas.model.Usuario;
-import br.pucminas.repository.BancoDados;
-import br.pucminas.security.Seguranca;
-
-
 /* 
  essa classe serve para mosatrar ao usuario o menu do sistema, e para interagir com ele, chamando os metodos do banco de dados,
  foi feita utilizando maven e lanterna, porem por utulizar o lanterna, foi necessario fazer algumas adaptações, como por exemplo,
@@ -36,7 +33,6 @@ public class Menu {
 
     private final BancoDados banco;
     private final Scanner entrada;
-     private Usuario usuarioLogado;
 
     public Menu(BancoDados banco, Scanner entrada) {
         this.banco = banco;
@@ -177,13 +173,6 @@ public class Menu {
             if (usuario != null && Seguranca.corresponde(senha, usuario.getHashSenha())) {
                 sucesso("Bem-vindo(a), " + usuario.getNome() + "!");
                 aguardar();
-                if (usuario != null && Seguranca.corresponde(senha, usuario.getHashSenha())) {
-    sucesso("Bem-vindo(a), " + usuario.getNome() + "!");
-    aguardar();
-    usuarioLogado = usuario;
-    menuPrincipal(usuario);
-    return;
-}
                 menuPrincipal(usuario);
                 return;
             }
@@ -244,7 +233,7 @@ public class Menu {
 
     private static final int POR_PAGINA = 5;
 
-    /** Menu de busca: A = mais recentes, B = palavras-chave (outra etapa). */
+    /** Nós reunimos a listagem por data e a busca por relevância no mesmo menu. */
     private void buscarPerguntas() {
         while (true) {
             limparTela();
@@ -254,7 +243,7 @@ public class Menu {
             String op = entrada.nextLine().trim().toUpperCase();
             switch (op) {
                 case "A" -> listarRecentesPaginado();
-                case "B" -> { erro("Busca por palavras-chave ainda não implementada."); aguardar(); }
+                case "B" -> buscarPorPalavrasChave();
                 case "0" -> { return; }
                 default -> { erro("Opção inválida."); aguardar(); }
             }
@@ -264,6 +253,23 @@ public class Menu {
     /** Lista as perguntas (ordem decrescente da Árvore B+), 5 por página. */
     private void listarRecentesPaginado() {
         List<Pergunta> todas = banco.perguntasRecentes();
+        listarPerguntasPaginado(todas, "Perguntas mais recentes");
+    }
+
+    private void buscarPorPalavrasChave() {
+        String consulta = textoObrigatorio("Palavras-chave: ");
+        List<Pergunta> encontradas = new ArrayList<>();
+        for (int id : banco.buscarPerguntasPorPalavrasChave(consulta)) {
+            Pergunta pergunta = banco.buscarPergunta(id);
+            if (pergunta != null && pergunta.isAtiva()) {
+                encontradas.add(pergunta);
+            }
+        }
+        // Nós mantemos a ordem recebida do índice, sem reordenar as perguntas por data.
+        listarPerguntasPaginado(encontradas, "Resultados por relevância");
+    }
+
+    private void listarPerguntasPaginado(List<Pergunta> todas, String titulo) {
         int totalPaginas = Math.max(1, (todas.size() + POR_PAGINA - 1) / POR_PAGINA);
         int pagina = 0;
         while (true) {
@@ -272,7 +278,7 @@ public class Menu {
             int fim = Math.min(ini + POR_PAGINA, todas.size());
             List<String> linhas = new ArrayList<>();
             if (todas.isEmpty()) {
-                linhas.add("Nenhuma pergunta cadastrada.");
+                linhas.add("Nenhuma pergunta encontrada.");
             }
             for (int i = ini; i < fim; i++) {
                 Pergunta p = todas.get(i);
@@ -283,7 +289,7 @@ public class Menu {
             linhas.add("");
             linhas.add("Página " + (pagina + 1) + " de " + totalPaginas);
             linhas.add("> - Próxima | < - Anterior | ID - Ver detalhes | 0 - Voltar");
-            moldura("Perguntas mais recentes", linhas);
+            moldura(titulo, linhas);
             System.out.print("Opção: ");
             String op = entrada.nextLine().trim();
             if (op.equals("0")) return;
@@ -293,7 +299,7 @@ public class Menu {
                 if (pagina > 0) pagina--; else { erro("Já está na primeira página."); aguardar(); }
             } else {
                 try {
-                  mostrarDetalhes(Integer.parseInt(op), usuarioLogado);
+                    mostrarDetalhes(Integer.parseInt(op));
                 } catch (NumberFormatException e) {
                     erro("Opção inválida.");
                     aguardar();
@@ -303,113 +309,32 @@ public class Menu {
     }
 
     /** Mostra todos os dados de uma pergunta e, abaixo, suas respostas. */
-  private void mostrarDetalhes(int id, Usuario usuario) {
-    while (true) {
+    private void mostrarDetalhes(int id) {
         Pergunta p = banco.buscarPergunta(id);
-        if (p == null || !p.isAtiva()) { erro("Pergunta não encontrada."); aguardar(); return; }
+        if (p == null || !p.isAtiva()) {
+            erro("Pergunta não encontrada.");
+            aguardar();
+            return;
+        }
         Usuario autor = banco.buscarUsuario(p.getIdUsuario());
-        List<Resposta> respostas = banco.respostasDaPergunta(id);
-        List<String> linhas = new ArrayList<>();
-        linhas.add("Início > Buscar perguntas > Pergunta");
-        linhas.add("");
-        linhas.addAll(quebrar(p.getPergunta(), 60));
-        linhas.add("");
-        linhas.add("Criada por " + (autor == null ? "desconhecido" : autor.getNome()) + " em " + DATA.format(Instant.ofEpochMilli(p.getCriacao())));
-        linhas.add("Palavras-chave: " + p.getPalavrasChave());
-        linhas.add("");
-        linhas.add("RESPOSTAS");
-        linhas.add("---------");
-        if (respostas.isEmpty()) linhas.add("Nenhuma resposta cadastrada.");
-        for (int i = 0; i < respostas.size(); i++) {
-            Resposta r = respostas.get(i);
-            Usuario a = banco.buscarUsuario(r.getIdUsuario());
-            List<String> partes = quebrar(r.getResposta(), 60);
-            linhas.add("");
-            linhas.add("(" + (i + 1) + ") " + partes.get(0));
-            for (int j = 1; j < partes.size(); j++) linhas.add("    " + partes.get(j));
-            linhas.add("    Respondido por " + (a == null ? "desconhecido" : a.getNome()));
-            linhas.add("    Nota: " + r.getNota() + " (" + r.getAvaliacoes() + " avaliações)");
-        }
-        linhas.add("");
-        linhas.add("(P) Responder à pergunta");
-        linhas.add("(A) Avaliar uma resposta");
-        linhas.add("(R) Retornar");
         limparTela();
-        moldura("Pergunta #" + id, linhas);
-        System.out.print("Opção: ");
-        String op = entrada.nextLine().trim().toUpperCase();
-        switch (op) {
-            case "R":
-                return;
-            case "P":
-                responderPergunta(p, autor, usuario);
-                break;
-            case "A":
-                selecionarRespostaParaAvaliar(respostas, usuario);
-                break;
-            default:
-                erro("Opção inválida.");
-                aguardar();
-                break;
-        }
-    }
-}
-private void responderPergunta(Pergunta p, Usuario criador, Usuario usuario) {
-    limparTela();
-    moldura("AJUDA AÍ 1.0",
-            "> Início > Buscar perguntas > Pergunta > Responder", "",
-            p.getPergunta(),
-            "Criada por " + (criador == null ? "desconhecido" : criador.getNome()) + " em " + DATA.format(Instant.ofEpochMilli(p.getCriacao())), "",
-            "Deixe em branco para cancelar.");
-    System.out.print("Resposta: ");
-    String texto = entrada.nextLine().trim();
-    if (texto.isEmpty()) return;
-    try {
-        banco.criarResposta(new Resposta(p.getIdPergunta(), usuario.getIdUsuario(), texto));
-        sucesso("Resposta incluída com sucesso.");
-        aguardarRegistro();
-    } catch (IllegalArgumentException e) {
-        erro(e.getMessage());
-        aguardar();
-    }
-}
-  
-private void listarRespostasDaPergunta(int idPergunta, Usuario usuario) {
-    List<Resposta> respostas = banco.respostasDaPergunta(idPergunta);
-
-    limparTela();
-    moldura("Pergunta", "RESPOSTAS");
-
-    if (respostas.isEmpty()) {
-        System.out.println("Nenhuma resposta cadastrada.");
-    } else {
-        for (int i = 0; i < respostas.size(); i++) {
-            Resposta resposta = respostas.get(i);
-            Usuario autor = banco.buscarUsuario(resposta.getIdUsuario());
-
-            System.out.println("\n(" + (i + 1) + ") " + resposta.getResposta());
-            System.out.println("Respondido por "
-                    + (autor == null ? "desconhecido" : autor.getNome()));
-            System.out.println("Nota: " + resposta.getNota()
-                    + " (" + resposta.getAvaliacoes() + " avaliações)");
-        }
+        moldura("Pergunta #" + p.getIdPergunta(),
+                p.getPergunta(), "",
+                "Autor: " + (autor == null ? "desconhecido" : autor.getNome()),
+                "Criada: " + DATA.format(Instant.ofEpochMilli(p.getCriacao())),
+                "Alterada: " + DATA.format(Instant.ofEpochMilli(p.getAlteracao())),
+                "Palavras-chave: " + p.getPalavrasChave(),
+                "Nota: " + p.getNota());
+        listarRespostasDaPergunta(id);
+        System.out.print("Enter para voltar...");
+        entrada.nextLine();
     }
 
-    System.out.println("\n(A) Avaliar uma resposta");
-    System.out.println("(R) Retornar");
-    System.out.print("\nOpção: ");
-
-    String opcao = entrada.nextLine().trim();
-
-    switch (opcao.toUpperCase()) {
-        case "A" -> selecionarRespostaParaAvaliar(respostas, usuario);
-        case "R" -> {
-            // Retorna à tela anterior.
-        }
-        default -> erro("Opção inválida.");
+    /** PLACEHOLDER - será implementado pela pessoa responsável pelas Respostas. */
+    private void listarRespostasDaPergunta(int idPergunta) {
+        // TODO (Pessoa 2/3): listar as respostas da pergunta idPergunta
+        System.out.println("(Respostas: em implementação)");
     }
-}
-
 
     private void minhaArea(Usuario usuario) {
         boolean continuar = true;
@@ -419,168 +344,17 @@ private void listarRespostasDaPergunta(int idPergunta, Usuario usuario) {
             primeiraVez = false;
             limparTela();
             moldura("Minha área", "1 - Meus dados", "2 - Minhas perguntas", "3 - Minhas respostas",
-                    "4 - Minhas avaliações", "0 - Retornar");
+                    "4 - Meus votos", "0 - Voltar");
             switch (opcao()) {
                 case 1 -> meusDados(usuario);
                 case 2 -> minhasPerguntas(usuario);
-               case 3 -> minhasRespostas(usuario);
-               case 4 -> minhasAvaliacoes(usuario);
+                case 3, 4 -> System.out.println("Esta funcionalidade ainda não foi implementada.");
                 case 0 -> continuar = false;
                 default -> erro("Opção inválida.");
             }
         }
     }
 
-
-  
-private void minhasRespostas(Usuario usuario) {
-    while (true) {
-        List<Resposta> respostas = banco.respostasDoUsuario(usuario.getIdUsuario());
-        List<String> linhas = new ArrayList<>();
-
-        if (respostas.isEmpty()) {
-            linhas.add("Você ainda não possui respostas ativas.");
-        }
-
-        for (int i = 0; i < respostas.size(); i++) {
-            Resposta resposta = respostas.get(i);
-            Pergunta pergunta = banco.buscarPergunta(resposta.getIdPergunta());
-
-            linhas.add((i + 1) + ". " + resposta.getResposta());
-            linhas.add("   Pergunta: " +
-                    (pergunta == null ? "Não encontrada" : pergunta.getPergunta()));
-            linhas.add("   Nota: " + resposta.getNota()
-                    + " | Avaliações: " + resposta.getAvaliacoes());
-        }
-
-        linhas.add("");
-        linhas.add("D - Ver detalhes de uma resposta");
-        linhas.add("A - Arquivar uma resposta");
-        linhas.add("R - Voltar");
-
-        limparTela();
-        moldura("Minhas respostas", linhas);
-        System.out.print("Opção: ");
-
-        String op = entrada.nextLine().trim().toUpperCase();
-
-        if (op.equals("R")) {
-            return;
-        }
-
-        if (!op.equals("D") && !op.equals("A")) {
-            erro("Opção inválida.");
-            aguardar();
-            continue;
-        }
-
-        if (respostas.isEmpty()) {
-            erro("Não há respostas disponíveis.");
-            aguardar();
-            continue;
-        }
-
-        int n = inteiro("Número da resposta (0 para voltar): ");
-
-        if (n == 0) {
-            continue;
-        }
-
-        if (n < 1 || n > respostas.size()) {
-            erro("Resposta inválida.");
-            aguardar();
-            continue;
-        }
-
-        Resposta resposta = respostas.get(n - 1);
-        Pergunta pergunta = banco.buscarPergunta(resposta.getIdPergunta());
-
-        if (op.equals("D")) {
-            List<String> detalhes = new ArrayList<>();
-            detalhes.add("Pergunta: " +
-                    (pergunta == null ? "Não encontrada" : pergunta.getPergunta()));
-            detalhes.add("");
-            detalhes.add("Sua resposta:");
-            detalhes.addAll(quebrar(resposta.getResposta(), 60));
-            detalhes.add("");
-            detalhes.add("Nota: " + resposta.getNota());
-            detalhes.add("Avaliações: " + resposta.getAvaliacoes());
-
-            limparTela();
-            moldura("Detalhes da resposta #" + resposta.getIdResposta(), detalhes);
-            aguardar();
-        } else {
-            System.out.print("Confirma o arquivamento? (S/N): ");
-            String confirmar = entrada.nextLine().trim();
-
-            if (confirmar.equalsIgnoreCase("S")) {
-                try {
-                    banco.arquivarResposta(
-                            resposta.getIdResposta(),
-                            usuario.getIdUsuario()
-                    );
-                    sucesso("Resposta arquivada. O registro não foi excluído.");
-                } catch (IllegalArgumentException e) {
-                    erro(e.getMessage());
-                }
-
-                aguardar();
-            }
-        }
-    }
-}
-
-
-
-
-
-
-    private void minhasAvaliacoes(Usuario usuario) {
-    while (true) {
-        List<Avaliacao> lista = banco.avaliacoesDoUsuario(usuario.getIdUsuario());
-        List<String> linhas = new ArrayList<>();
-        if (lista.isEmpty()) linhas.add("Você ainda não avaliou nenhuma resposta.");
-        for (int i = 0; i < lista.size(); i++) {
-    Avaliacao a = lista.get(i);
-    Resposta r = banco.buscarResposta(a.get_IdResposta());
-
-    linhas.add("(" + (i + 1) + ") " +
-            (a.get_avaliacao() ? "Concordo" : "Discordo"));
-
-    if (r == null) {
-        linhas.add("    Resposta não encontrada.");
-        continue;
-    }
-
-    Pergunta pergunta = banco.buscarPergunta(r.getIdPergunta());
-
-    linhas.add("    Pergunta: " +
-            (pergunta == null ? "Não encontrada" : pergunta.getPergunta()));
-    linhas.add("    Resposta: " + r.getResposta());
-    linhas.add("    Nota atual da resposta: " + r.getNota());
-}
-        linhas.add("");
-        linhas.add("(C) Cancelar uma avaliação");
-        linhas.add("(R) Retornar");
-        limparTela();
-        moldura("Minhas avaliações", linhas);
-        System.out.print("Opção: ");
-        String op = entrada.nextLine().trim().toUpperCase();
-        if (op.equals("R")) return;
-        if (!op.equals("C")) { erro("Opção inválida."); aguardar(); continue; }
-        if (lista.isEmpty()) { erro("Não há avaliações para cancelar."); aguardar(); continue; }
-        int n = inteiro("Número da avaliação (0 para voltar): ");
-        if (n == 0) continue;
-        if (n < 1 || n > lista.size()) { erro("Avaliação inválida."); aguardar(); continue; }
-        try {
-            banco.cancelarAvaliacao(lista.get(n - 1).getId(), usuario.getIdUsuario());
-            sucesso("Avaliação cancelada.");
-        } catch (IllegalArgumentException e) {
-            erro(e.getMessage());
-        }
-        aguardar();
-    }
-}
     /*
      * cria a interface com os dados do usuário
     */
@@ -626,126 +400,6 @@ private void minhasRespostas(Usuario usuario) {
         }
     }
 
-private void testarAvaliacoes(Usuario usuario) {
-    while (true) {
-        limparTela();
-        moldura("Minhas avaliações",
-                "1 - Nova avaliação",
-                "0 - Voltar");
-
-        switch (opcao()) {
-            case 1 -> novaAvaliacao(usuario);
-            case 0 -> {
-                return;
-            }
-            default -> {
-                erro("Opção inválida.");
-                aguardar();
-            }
-        }
-    }
-}
-
-private void novaAvaliacao(Usuario usuario) {
-    limparTela();
-    moldura("Nova avaliação");
-
-    int idResposta = inteiro("ID da resposta: ");
-
-    System.out.println("1 - Positiva");
-    System.out.println("2 - Negativa");
-
-    int escolha = inteiro("Sua avaliação: ");
-
-    if (escolha != 1 && escolha != 2) {
-        erro("Escolha inválida.");
-        aguardar();
-        return;
-    }
-
-    boolean positiva = escolha == 1;
-
-    Avaliacao avaliacao = new Avaliacao(
-            -1,
-            usuario.getIdUsuario(),
-            idResposta,
-            positiva
-    );
-
-    limparTela();
-    moldura("Conferir avaliação",
-            "ID da avaliação: " + avaliacao.getId(),
-            "ID do usuário: " + avaliacao.get_IdUsuario(),
-            "ID da resposta: " + avaliacao.get_IdResposta(),
-            "Tipo: " + (avaliacao.get_avaliacao()
-                    ? "Positiva" : "Negativa"));
-
-    System.out.println();
-    System.out.println("1 - Confirmar teste");
-    System.out.println("0 - Cancelar");
-
-    if (opcao() == 1) {
-        try {
-            byte[] dados = avaliacao.serialize();
-
-            Avaliacao recuperada = new Avaliacao();
-            recuperada.deserialize(dados);
-
-            sucesso("Serialização conferida!");
-            System.out.println("Tamanho: " + dados.length + " bytes");
-            System.out.println("ID do usuário recuperado: "
-                    + recuperada.get_IdUsuario());
-            System.out.println("ID da resposta recuperado: "
-                    + recuperada.get_IdResposta());
-            System.out.println("Avaliação recuperada: "
-                    + (recuperada.get_avaliacao()
-                    ? "Positiva" : "Negativa"));
-        } catch (Exception e) {
-            erro("Erro ao testar a avaliação: " + e.getMessage());
-        }
-    } else {
-        System.out.println("Teste cancelado.");
-    }
-
-    System.out.println("Pressione Enter para continuar...");
-    entrada.nextLine();
-}
-private void avaliarResposta(Usuario usuario, Resposta resposta) {
-    System.out.println("(A) Concordar com a resposta");
-    System.out.println("(B) Discordar da resposta");
-    System.out.println("(R) Retornar ao menu anterior");
-    System.out.print("\nOpção: ");
-
-    String opcao = entrada.nextLine().trim();
-
-    switch (opcao.toUpperCase()) {
-        case "A", "B" -> {
-            boolean positiva = opcao.equalsIgnoreCase("A");
-
-            Avaliacao avaliacao = new Avaliacao(
-                -1,
-                usuario.getIdUsuario(),
-                resposta.getIdResposta(),
-                positiva
-            );
-
-            try {
-               banco.criarAvaliacao(avaliacao);
-sucesso("Avaliação registrada com sucesso!");
-aguardar();
-} catch (IllegalArgumentException e) {
-    erro(e.getMessage());
-    aguardar();
-}
-        }
-        case "R" -> {
-            // Volta à tela anterior.
-        }
-        default -> erro("Opção inválida.");
-    }
-}
-
-
     private void minhasPerguntas(Usuario usuario) {
         boolean continuar = true;
         boolean primeiraVez = true;
@@ -769,25 +423,17 @@ aguardar();
             linhas.add("1 - Incluir pergunta");
             linhas.add("2 - Alterar pergunta");
             linhas.add("3 - Arquivar pergunta");
-            linhas.add("4 - Ver respostas recebidas");
             linhas.add("0 - Voltar");
             moldura("Minhas perguntas", linhas);
             switch (opcao()) {
                 case 1 -> incluirPergunta(usuario);
                 case 2 -> editarPergunta(perguntas);
                 case 3 -> arquivarPergunta(perguntas);
-                case 4 -> respostasRecebidasDaPergunta(perguntas, usuario);
                 case 0 -> continuar = false;
                 default -> erro("Opção inválida.");
             }
         }
     }
-    private Pergunta selecionarPergunta(List<Pergunta> perguntas) {
-    if (perguntas.isEmpty()) { erro("Nenhuma pergunta disponível."); aguardar(); return null; }
-    int n = inteiro("Número da pergunta (0 para voltar): ");
-    if (n < 1 || n > perguntas.size()) return null;
-    return perguntas.get(n - 1);
-}
 
     private void incluirPergunta(Usuario usuario) {
         String texto = textoObrigatorio("Texto da pergunta: ");
@@ -823,43 +469,19 @@ aguardar();
         sucesso("Pergunta arquivada. O registro não foi excluído.");
         aguardarRegistro();
     }
-    private List<String> quebrar(String texto, int max) {
-    List<String> out = new ArrayList<>();
-    String atual = "";
-    for (String w : texto.split(" ")) {
-        if (!atual.isEmpty() && atual.length() + 1 + w.length() > max) { out.add(atual); atual = w; }
-        else atual = atual.isEmpty() ? w : atual + " " + w;
+
+    private Pergunta selecionarPergunta(List<Pergunta> perguntas) {
+        if (perguntas.isEmpty()) {
+            erro("Não há perguntas para selecionar.");
+            return null;
+        }
+        int numero = inteiro("Número da pergunta: ");
+        if (numero < 1 || numero > perguntas.size()) {
+            erro("Número inválido.");
+            return null;
+        }
+        return perguntas.get(numero - 1);
     }
-    out.add(atual);
-    return out;
-}
-
-   
-private void selecionarRespostaParaAvaliar(
-        List<Resposta> respostas, Usuario usuario) {
-
-if (respostas.isEmpty()) {
-    erro("Não há respostas para avaliar.");
-    aguardar();
-    return;
-}
-
-   int numero = inteiro("Número da resposta para avaliar (0 para voltar): ");
-
-    if (numero == 0) {
-        return;
-    }
-
-    if (numero < 1 || numero > respostas.size()) {
-        erro("Resposta inválida.");
-        aguardar();
-        return;
-    }
-
-    Resposta resposta = respostas.get(numero - 1);
-    avaliarResposta(usuario, resposta);
-}
-
 
     private int opcao() {
         return inteiro("Opção: ");
@@ -894,104 +516,4 @@ if (respostas.isEmpty()) {
             erro("Este campo é obrigatório.");
         }
     }
-
-
-    
-private void respostasRecebidasDaPergunta(
-        List<Pergunta> perguntas, Usuario usuario) {
-
-    Pergunta pergunta = selecionarPergunta(perguntas);
-
-    if (pergunta == null) {
-        return;
-    }
-
-    while (true) {
-        List<Resposta> respostas =
-                banco.respostasDaPergunta(pergunta.getIdPergunta());
-
-        List<String> linhas = new ArrayList<>();
-        linhas.add("Pergunta: " + pergunta.getPergunta());
-        linhas.add("");
-
-        if (respostas.isEmpty()) {
-            linhas.add("Esta pergunta ainda não recebeu respostas ativas.");
-        }
-
-        for (int i = 0; i < respostas.size(); i++) {
-            Resposta resposta = respostas.get(i);
-            Usuario autor = banco.buscarUsuario(resposta.getIdUsuario());
-
-            linhas.add((i + 1) + ". " + resposta.getResposta());
-            linhas.add("   Autor: " +
-                    (autor == null ? "Desconhecido" : autor.getNome()));
-            linhas.add("   Nota: " + resposta.getNota()
-                    + " | Avaliações: " + resposta.getAvaliacoes());
-        }
-
-        linhas.add("");
-        linhas.add("A - Arquivar resposta de outro usuário");
-        linhas.add("R - Voltar");
-
-        limparTela();
-        moldura("Respostas recebidas", linhas);
-        System.out.print("Opção: ");
-
-        String op = entrada.nextLine().trim().toUpperCase();
-
-        if (op.equals("R")) {
-            return;
-        }
-
-        if (!op.equals("A")) {
-            erro("Opção inválida.");
-            aguardar();
-            continue;
-        }
-
-        if (respostas.isEmpty()) {
-            erro("Não há respostas disponíveis.");
-            aguardar();
-            continue;
-        }
-
-        int n = inteiro("Número da resposta (0 para voltar): ");
-
-        if (n == 0) {
-            continue;
-        }
-
-        if (n < 1 || n > respostas.size()) {
-            erro("Resposta inválida.");
-            aguardar();
-            continue;
-        }
-
-        Resposta resposta = respostas.get(n - 1);
-
-        if (resposta.getIdUsuario() == usuario.getIdUsuario()) {
-            erro("Nesta tela, você só pode arquivar respostas de outros usuários.");
-            aguardar();
-            continue;
-        }
-
-        System.out.print("Confirma o arquivamento? (S/N): ");
-        String confirmar = entrada.nextLine().trim();
-
-        if (confirmar.equalsIgnoreCase("S")) {
-            try {
-                banco.arquivarResposta(
-                        resposta.getIdResposta(),
-                        usuario.getIdUsuario()
-                );
-                sucesso("Resposta arquivada.");
-            } catch (IllegalArgumentException e) {
-                erro(e.getMessage());
-            }
-
-            aguardar();
-        }
-    }
-}
-
 }

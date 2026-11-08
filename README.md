@@ -1,11 +1,9 @@
-### Trabalho Prático AEDS III — Sistema Ajuda Aí 1.0
+# Relatório do Trabalho Prático 1 — AEDS III
 
-# Parte 1 — Relacionamento 1:N
-
-<div align="center">
+### Sistema Ajuda Aí 1.0
 
 ### Participantes
-    
+
 | Nome completo | Matrícula |
 | --- | --- |
 | Ana Flávia Menezes de Almeida | 8976988 |
@@ -13,7 +11,6 @@
 | Eduardo Borges de Souza | 890309 |
 | Rian Chaves Pimenta | 898910 |
 
-</div>
 
 - **Turma:** (8203100) Algoritmos e Estruturas de Dados III
 - **Professor:** Marcos André Silveira Kutova
@@ -108,7 +105,7 @@ O sistema não oferece uma opção de desarquivamento, portanto o procedimento �
 - **`ParEmailId`** (`br.pucminas.persistence`): adaptação do `ParNomeId` do professor, com campo de 60 bytes, usada como índice indireto e-mail → ID do usuário na Árvore B+.
 - **`BancoDados`**: concentra os dois arquivos de dados, os índices e as regras que envolvem mais de um arquivo.
 
-A única alteração feita nas classes do professor foi um construtor extra em `Arquivo`, que recebe a pasta base dos dados (o original grava sempre em `./dados`). Isso foi necessário para os testes automatizados, que usam pasta temporária; o construtor original continua existindo e com o mesmo comportamento.
+Nós acrescentamos um construtor extra em `Arquivo`, que recebe a pasta base dos dados (o original grava sempre em `./dados`). Isso permite usar pastas temporárias nos testes; o construtor original continua existindo. No TP3, também acrescentamos `AutoCloseable` e `close()` à cópia Maven de `ListaInvertida`, para fechar os arquivos do dicionário e dos blocos. Nós mantivemos os algoritmos de armazenamento fornecidos na disciplina.
 
 ### 3.4 Segurança
 
@@ -258,99 +255,94 @@ mvn exec:java
 > Caso necessário obtenha o Maven acessando o site https://maven.apache.org/download.cgi e baixando o pacote 	`apache-maven-3.9.16-bin.zip`  \
 > Certifique-se que a variável de sistema `mvn` esteja configurada na máquina referenciando a pasta `bin`.
 
-# Parte 2 — Relacionamento N:N
+---
 
-## 1. Funcionalidades implementadas
+## 10. Trabalho Prático 2 — Relacionamento N:N
 
-Evoluindo o sistema “Ajuda Aí 1.0”. O TP2 acrescenta respostas, avaliações e a busca de perguntas.
+Nesta segunda etapa, o Ajuda Aí 1.0 evoluiu para suportar o relacionamento N:N entre Usuários e Perguntas por meio da entidade `Resposta`, bem como o relacionamento entre Usuários e Respostas por meio da entidade `Avaliacao`.
 
-### 1.1 Listagem de perguntas mais recentes (menu B → A)
+### 10.1 Novas funcionalidades implementadas
 
-* Novo índice na entidade Pergunta, por data de criação em ordem decrescente.
-* Paginação de 5 em 5, com “Página anterior” e “Próxima página”.
-* Ao escolher uma pergunta, aparecem seus dados e as respostas ordenadas por nota (decrescente).
-* A busca por palavras-chave (opção B) fica para outro TP.
+*   **Busca e Paginação (Pessoa 1):** Listagem das perguntas mais recentes de forma paginada (5 por página) utilizando um novo índice de Árvore B+ ordenado por data de criação decrescente.
+*   **Respostas:** [A CARGO DA PESSOA 2 - Explicar brevemente o CRUD de Respostas e a Árvore B+ de relacionamento].
+*   **Avaliações:** [A CARGO DA PESSOA 3 - Explicar brevemente o sistema de avaliação, notas e impedimento de voto duplo].
+*   **Área Pessoal e Integração:** [A CARGO DA PESSOA 4 - Explicar a integração na área do usuário, gerenciamento de respostas recebidas e avaliações feitas].
 
-### 1.2 Entidade Resposta 
+### 10.2 Checklist Obrigatório (TP2)
 
-* `idResposta` 
-* `idPergunta` 
-* `idUsuario` 
-* `criacao` (long, em milissegundos) 
-* `resposta` (texto) 
-* `nota` (short) 
-* `avaliacoes` (short)
-* `ativa` (boolean)
-
-    * Respostas não são excluídas, apenas arquivadas (`ativa = false`).
-    * Não podem ser editadas. Se o usuário errar, arquiva e cria outra.
-    * O relacionamento N:N usa duas árvores B+: (`idPergunta`, `idResposta`) e (`idUsuario`, `idResposta`).
-
-### 1.3 Entidade Avaliação 
-
-* `idAvaliacao` 
-* `idUsuario` 
-* `idResposta` 
-* `avaliacao` (`true = concordo`, `false = discordo`).
-
-    * Concordar soma 1 na nota da resposta, discordar subtrai 1, e avaliacoes sempre soma 1. Esses ajustes são feitos na entidade Resposta.
-    * O mesmo usuário não pode avaliar a mesma resposta duas vezes.
-    * O texto também fala em árvores B+ para as avaliações, “o mesmo” que foi feito para respostas. Isso sugere (idUsuario, idAvaliacao) e (idResposta, idAvaliacao).
-
-### 1.4 Telas de uma resposta
-
-* Se for do próprio usuário, só aparece “Arquivar resposta”.
-* Se for de outro, aparecem “Concordar” e “Discordar”.
-
-### 1.5 Área do usuário
-
-* **Minhas respostas**: lista as respostas dele. Ao selecionar uma, mostra a pergunta e a resposta, com a opção de arquivar.
-* **Minhas avaliações**: lista as respostas que ele avaliou. Ao selecionar uma, mostra a pergunta, a resposta e a avaliação feita, com a opção de cancelar a avaliação. Cancelar desfaz o efeito na nota e em avaliacoes. Para mudar uma avaliação, o usuário cancela e avalia de novo.
-* **Minhas perguntas**: passa a mostrar também as respostas de outros usuários, e o autor da pergunta pode arquivar uma delas.
-
-## Checklist
-
-**Há uma listagem paginada de perguntas, que mostra as perguntas em ordem decrescente de data a partir de uma Árvore B+ acrescentada ao CRUD de Perguntas?**
-
+*   Há uma listagem paginada de perguntas, que mostra as perguntas em ordem decrescente de data a partir de uma Árvore B+ acrescentada ao CRUD de Perguntas?
 **Sim.** Foi criada a classe `ParDataId` (data de criação `long` + `idPergunta` `int`, 12 bytes fixos), cujo `compareTo` é invertido na data. Assim, a pergunta mais recente fica na primeira folha da `ArvoreBMais<ParDataId>` (arquivo `indicePerguntasData.bplus`), adicionada ao `BancoDados` junto do CRUD de perguntas. Toda pergunta criada é inserida nesse índice e, se o arquivo estiver vazio, o índice é reconstruído a partir dos registros. O método `perguntasRecentes()` percorre as folhas encadeadas da árvore (`read(null)`) e já recebe os IDs em ordem decrescente, sem ordenação em memória; depois lê cada pergunta pelo CRUD e descarta as arquivadas. No menu "Buscar perguntas → A", a listagem mostra 5 perguntas por página, com `>` (próxima), `<` (anterior), `0` (voltar) e a digitação do ID para ver os detalhes completos.
 
-**Há uma listagem das respostas a uma pergunta selecionada, em ordem decrescente de nota?**
-**Sim.** Ao selecionar uma pergunta, o sistema recupera as respostas relacionadas a ela e as apresenta em ordem decrescente de nota. Dessa forma, as respostas com maior pontuação aparecem primeiro. A entidade `Resposta` possui os campos `nota` e `avaliacoes`, utilizados durante o processo de avaliação.
+*   Há uma listagem das respostas a uma pergunta selecionada, em ordem decrescente de nota?
+**[A CARGO DA PESSOA 2]** - Responder Sim/Não e justificar.
 
+*   O usuário pode responder a uma pergunta?
+**[A CARGO DA PESSOA 2]** - Responder Sim/Não e justificar.
 
-**O usuário pode responder a uma pergunta?**
-**Sim.** O sistema permite que um usuário autenticado selecione uma pergunta e cadastre uma resposta. A resposta é associada ao usuário que a criou por meio do `idUsuario` e à pergunta respondida por meio do `idPergunta`, permitindo identificar o autor e a pergunta à qual a resposta pertence.
+*   O usuário pode arquivar a própria resposta?
+**[A CARGO DA PESSOA 2]** - Responder Sim/Não e justificar.
 
-**O usuário pode arquivar a própria resposta?**
-**Sim.** O usuário pode arquivar uma resposta criada por ele. O sistema não remove fisicamente o registro; em vez disso, altera o campo `ativa` para `false`, mantendo o registro armazenado. As respostas não podem ser editadas; caso seja necessário corrigir uma resposta, ela pode ser arquivada e uma nova resposta pode ser criada.
+*   O usuário pode avaliar uma resposta?
+**[A CARGO DA PESSOA 3]** - Responder Sim/Não e justificar.
 
-**O usuário pode avaliar uma resposta?**
-**Sim.** O usuário pode avaliar uma resposta utilizando as opções de concordar ou discordar. A entidade `Avaliacao` registra o `idUsuario`, o `idResposta` e o valor da avaliação. Ao concordar, a nota da resposta é incrementada; ao discordar, a nota é decrementada. A quantidade de avaliações também é atualizada, e o mesmo usuário não pode avaliar a mesma resposta mais de uma vez.
+*   Na área do usuário, o usuário pode visualizar as respostas às suas perguntas?
+**[A CARGO DA PESSOA 4]** - Responder Sim/Não e justificar.
 
-**Na área do usuário, o usuário pode visualizar as respostas às suas perguntas?**
-**Sim.** Na área do usuário, a opção **Minhas perguntas** permite visualizar as perguntas cadastradas pelo usuário e as respostas feitas por outros usuários. Dessa forma, o autor consegue acompanhar as respostas recebidas para suas próprias perguntas.
+*   Na área do usuário, o usuário pode arquivar uma resposta de outro usuário a uma das suas perguntas?
+**[A CARGO DA PESSOA 4]** - Responder Sim/Não e justificar.
 
-**Na área do usuário, o usuário pode arquivar uma resposta de outro usuário a uma das suas perguntas?**
-**Sim.** O autor de uma pergunta pode selecionar uma resposta feita por outro usuário e arquivá-la. O arquivamento altera o estado da resposta para inativa, por meio do campo `ativa`, sem apagar fisicamente o registro do arquivo.
+*   Na área do usuário, o usuário pode visualizar e arquivar as respostas que escreveu?
+**[A CARGO DA PESSOA 4]** - Responder Sim/Não e justificar.
 
-**Na área do usuário, o usuário pode visualizar e arquivar as respostas que escreveu?**
-**Sim.** A área **Minhas respostas** lista as respostas criadas pelo usuário. Ao selecionar uma resposta, o sistema apresenta a pergunta correspondente e o conteúdo da resposta, além de disponibilizar a opção de arquivamento. As respostas não são editadas; caso seja necessário corrigir uma resposta, ela pode ser arquivada e uma nova resposta pode ser criada.
+*   Na área do usuário, o usuário pode visualizar e arquivar a avaliação que realizou em uma resposta?
+**[A CARGO DA PESSOA 4]** - Responder Sim/Não e justificar.
 
-**Na área do usuário, o usuário pode visualizar e arquivar a avaliação que realizou em uma resposta?**
-**Sim.** A área **Minhas avaliações** permite visualizar as avaliações realizadas pelo usuário, mostrando a pergunta, a resposta avaliada e a avaliação registrada. Também é possível cancelar uma avaliação. Ao cancelar, o efeito da avaliação é desfeito na nota da resposta e na quantidade de avaliações. Para alterar uma avaliação, o usuário pode cancelar a avaliação anterior e realizar uma nova avaliação.
+*   A integridade do relacionamento entre perguntas e respostas está mantida em todas as operações?
+**[A CARGO DA EQUIPE / PESSOA 2]** - Responder Sim/Não e justificar.
 
-**A integridade do relacionamento entre perguntas e respostas está mantida em todas as operações?**
-**Sim.** A entidade `Resposta` mantém tanto o `idPergunta`, que identifica a pergunta respondida, quanto o `idUsuario`, que identifica o autor da resposta. Além disso, o relacionamento entre perguntas e respostas é mantido por duas Árvores B+: `(idPergunta, idResposta)` e `(idUsuario, idResposta)`. Esses índices permitem localizar as respostas associadas a uma determinada pergunta e também as respostas pertencentes a um determinado usuário.
+*   A integridade do relacionamento entre respostas e avaliações está mantida em todas as operações?
+**[A CARGO DA EQUIPE / PESSOA 3]** - Responder Sim/Não e justificar.
 
-**A integridade do relacionamento entre respostas e avaliações está mantida em todas as operações?**
-**Sim.** Cada avaliação possui um `idUsuario` e um `idResposta`, permitindo identificar quem realizou a avaliação e qual resposta foi avaliada. O sistema também impede que o mesmo usuário avalie a mesma resposta mais de uma vez. Quando uma avaliação é cancelada, o efeito correspondente é removido da nota e da quantidade de avaliações da resposta, mantendo os dados relacionados consistentes.
+### 10.3 Vídeo de demonstração (TP2)
 
-**O trabalho compila corretamente?**
-**Sim.** O projeto utiliza Java 19 e Maven. Os testes automatizados podem ser executados por meio do comando `mvn test`, e a execução dos testes é concluída com sucesso, indicando que o projeto compila corretamente.
+- **Link do Vídeo:** [INSERIR LINK DO NOVO VÍDEO AQUI QUANDO FINALIZADO]
 
-**O trabalho está completo e funcionando sem erros de execução?**
-**Sim.** Dentro do escopo definido para esta etapa, foram implementadas as funcionalidades de listagem paginada das perguntas, cadastro e gerenciamento de respostas, avaliação das respostas e gerenciamento dessas informações na área do usuário. Também foram implementadas as estruturas de Árvores B+ necessárias para os relacionamentos entre as entidades.
+## 11. Trabalho Prático 3 — Índice Invertido
 
+Nós implementamos o índice invertido das palavras-chave de `Pergunta` usando as classes `aed3.ListaInvertida` e `aed3.ElementoLista` fornecidas na disciplina. Criamos `TratamentoTexto.palavrasValidas` para converter o texto para minúsculas, retirar os acentos e substituir pontuações por espaços. Em `removerStopWords`, utilizamos um `HashSet` com palavras vazias em português. Nós aplicamos esse mesmo tratamento na indexação e na consulta; palavras repetidas continuam no documento para o cálculo da frequência.
 
-**O trabalho é original e não a cópia de um trabalho de outro grupo?**
-**Sim.** O trabalho foi desenvolvido pelo grupo com base nos requisitos e conteúdos apresentados na disciplina. As implementações foram realizadas especificamente para o projeto **Ajuda Aí**, utilizando as estruturas e conceitos trabalhados durante a disciplina. O grupo também contou com inteligência artificial como ferramenta de apoio durante o desenvolvimento, sem que isso caracterize a cópia de um trabalho de outro grupo.
+Nós concentramos a indexação em `IndicePalavrasChave`. Para cada ocorrência válida, utilizamos a contribuição `1 / total de palavras válidas`; consultamos `lista.read(termo, idPergunta)` e criamos o par quando ele não existe, ou atualizamos sua frequência somando a nova contribuição. Assim, o TF final corresponde à frequência do termo dividida pelo total de palavras válidas, sem repetir o ID na lista do termo. Nós integramos esse índice a `BancoDados.criarPergunta`, `atualizarPergunta` e `excluirPergunta`: uma inserção incrementa o total de entidades, uma alteração retira os termos antigos antes de inserir os novos, e um arquivamento ou exclusão remove as ocorrências e reduz o total. Nós consideramos como documentos as perguntas ativas, inclusive aquelas sem palavras válidas; perguntas arquivadas não entram na busca. Nós gravamos o índice em `dados/palavrasChave.dicionario.db` e `dados/palavrasChave.blocos.db` e o reconstruímos a partir dos registros existentes se faltar um desses arquivos.
+
+Na consulta, nós usamos `IndicePalavrasChave.buscar` para recuperar `lista.read(termo)` e calcular o IDF por `Math.log10((double) lista.numeroEntidades() / ocorrencias.length)`. Nós multiplicamos o TF de cada ocorrência pelo IDF e somamos as pontuações quando termos diferentes apontam para a mesma pergunta. Retornamos os IDs em ordem decrescente de pontuação, com desempate pelo menor ID; termos repetidos na consulta são considerados uma única vez. Nós ignoramos termos sem ocorrências para evitar divisão por zero. Em `BancoDados.buscarPerguntasPorPalavrasChave`, disponibilizamos o resultado para `Menu.buscarPorPalavrasChave`, acessível em **Menu principal → Buscar perguntas → B**. Nós reaproveitamos a paginação de cinco perguntas e a abertura dos detalhes, mantendo a ordem de relevância.
+
+### 11.1 Checklist Obrigatório (TP3)
+
+* O índice invertido com palavras-chave foi criado usando a classe ListaInvertida?
+
+**Sim.** Nós utilizamos a classe da disciplina em `IndicePalavrasChave`, armazenando pares de ID e TF com `ElementoLista`. Nós preservamos a autoria indicada no código original.
+
+* É possível buscar perguntas por palavras-chave no menu de buscar perguntas?
+
+**Sim.** Nós implementamos a opção B e verificamos o fluxo real no terminal: cadastro, login, inclusão de três perguntas, consulta `JAVA e RÁRO!` e abertura dos detalhes da pergunta retornada.
+
+* As perguntas retornadas estão corretamente classificadas pelo modelo TFxIDF?
+
+**Sim.** Nós somamos `TF × log10(N / df)` por ID e ordenamos por pontuação decrescente. Nós testamos frequências diferentes, a soma de termos, consultas normalizadas e desempates. Na demonstração pelo terminal, a pergunta com `java raro` apareceu antes daquela com apenas `java`.
+
+* O trabalho compila corretamente?
+
+**Sim.** Nós executamos `mvn test`: **BUILD SUCCESS**, com **14 testes, nenhuma falha, nenhum erro e nenhum teste ignorado**. Desses, dez são os novos testes de `IndicePalavrasChaveTest`.
+
+* O trabalho está completo e funcionando sem erros de execução?
+
+**Sim.** Nós testamos normalização, stop words, TF, contagem de documentos, ordenação TF×IDF, alteração de palavras-chave, arquivamento, exclusão, reabertura e reconstrução do índice, todos sem erros. Nós também executamos o fluxo completo pelo menu (inclusão, busca por palavras-chave e abertura dos detalhes) sem nenhuma exceção em tempo de execução.
+
+* O trabalho é original e não a cópia de um trabalho de outro grupo?
+
+**Sim.** O trabalho foi desenvolvido pela nossa equipe com base no material da disciplina. Nós utilizamos apenas as classes fornecidas pelo professor (`ListaInvertida`, `ElementoLista`, `Arquivo`, `ArvoreBMais` e `HashExtensivel`) e escrevemos as classes `TratamentoTexto`, `IndicePalavrasChave` e as alterações em `BancoDados` e `Menu`.
+
+### 11.2 Vídeo de demonstração (TP3)
+
+- **Link do Vídeo:** [INSERIR LINK DO VÍDEO DO TP3 AQUI]
+
+Nós podemos demonstrar a opção **Buscar perguntas → B**, consultar palavras com acentos e mostrar a ordem dos resultados. Para explicar o código, nós mostramos `TratamentoTexto.palavrasValidas`, o trecho `read/create/update` de `IndicePalavrasChave.incluir` e o cálculo de IDF com a ordenação em `IndicePalavrasChave.buscar`.

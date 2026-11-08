@@ -1,0 +1,7 @@
+{
+  "name": "ajuda-ai-report-preview",
+  "private": true,
+  "scripts": {
+    "dev": "python3 .lovable/preview.py"
+  }
+}
