@@ -1,20 +1,21 @@
 package br.pucminas.repository;
 
-import aed3.Arquivo;
-import aed3.ArvoreBMais;
-import aed3.ParIdId;
-import br.pucminas.model.Pergunta;
-import br.pucminas.model.Usuario;
-import br.pucminas.persistence.ParDataId;
-import br.pucminas.persistence.ParEmailId;
-import br.pucminas.persistence.IndicePalavrasChave;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+
+import aed3.Arquivo;
+import aed3.ArvoreBMais;
+import aed3.ParIdId;
+import br.pucminas.model.Pergunta;
+import br.pucminas.model.Resposta;
+import br.pucminas.model.Usuario;
+import br.pucminas.persistence.IndicePalavrasChave;
+import br.pucminas.persistence.ParDataId;
+import br.pucminas.persistence.ParEmailId;
 
 /*
  Camada de acesso a dados.
@@ -32,8 +33,11 @@ public class BancoDados implements AutoCloseable {
 
     private final Arquivo<Usuario> usuarios;
     private final Arquivo<Pergunta> perguntas;
+    private final Arquivo<Resposta> respostas;
     private final ArvoreBMais<ParEmailId> indiceEmail;
     private final ArvoreBMais<ParIdId> indicePerguntasPorUsuario;
+    private final ArvoreBMais<ParIdId> indiceRespostasPorPergunta;
+    private final ArvoreBMais<ParIdId> indiceRespostasPorUsuario;
     private final ArvoreBMais<ParDataId> indicePerguntasPorData;
     private final IndicePalavrasChave indicePalavrasChave;
 
@@ -43,11 +47,16 @@ public class BancoDados implements AutoCloseable {
 
         usuarios = new Arquivo<>(base, "usuarios", Usuario.class.getConstructor());
         perguntas = new Arquivo<>(base, "perguntas", Pergunta.class.getConstructor());
+        respostas = new Arquivo<>(base, "respostas", Resposta.class.getConstructor());
 
         indiceEmail = new ArvoreBMais<>(ParEmailId.class.getConstructor(),
                 ORDEM_ARVORE, diretorio.resolve("indiceEmail.bplus").toString());
         indicePerguntasPorUsuario = new ArvoreBMais<>(ParIdId.class.getConstructor(),
                 ORDEM_ARVORE, diretorio.resolve("indicePerguntas.bplus").toString());
+        indiceRespostasPorPergunta = new ArvoreBMais<>(ParIdId.class.getConstructor(),
+                ORDEM_ARVORE, diretorio.resolve("indiceRespostasPergunta.bplus").toString());
+        indiceRespostasPorUsuario = new ArvoreBMais<>(ParIdId.class.getConstructor(),
+                ORDEM_ARVORE, diretorio.resolve("indiceRespostasUsuario.bplus").toString());
         indicePerguntasPorData = new ArvoreBMais<>(ParDataId.class.getConstructor(),
                 ORDEM_ARVORE, diretorio.resolve("indicePerguntasData.bplus").toString());
 
@@ -238,6 +247,148 @@ public class BancoDados implements AutoCloseable {
         }
     }
 
+    // -------------------- respostas (TP2) --------------------
+
+    /**
+     * Cria uma resposta para uma pergunta ativa e indexa o relacionamento
+     * pergunta -> respostas e usuário -> respostas.
+     */
+    public Resposta criarResposta(Resposta resposta) {
+        if (resposta == null) {
+            throw new IllegalArgumentException("Resposta inválida.");
+        }
+
+        try {
+            Pergunta pergunta = perguntas.read(resposta.getIdPergunta());
+            if (pergunta == null) {
+                throw new IllegalArgumentException("A pergunta informada não existe.");
+            }
+            if (!pergunta.isAtiva()) {
+                throw new IllegalArgumentException("A pergunta está arquivada.");
+            }
+            if (usuarios.read(resposta.getIdUsuario()) == null) {
+                throw new IllegalArgumentException("O usuário informado não existe.");
+            }
+
+            String texto = resposta.getResposta();
+            if (texto == null || texto.isBlank()) {
+                throw new IllegalArgumentException("A resposta não pode ser vazia.");
+            }
+            if (texto.length() > 20000) {
+                throw new IllegalArgumentException("A resposta é longa demais.");
+            }
+
+            respostas.create(resposta);
+            indiceRespostasPorPergunta.create(
+                    new ParIdId(resposta.getIdPergunta(), resposta.getIdResposta()));
+            indiceRespostasPorUsuario.create(
+                    new ParIdId(resposta.getIdUsuario(), resposta.getIdResposta()));
+            return resposta;
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception e) {
+            throw falha("criar resposta", e);
+        }
+    }
+
+    /** Lê uma resposta por ID, incluindo respostas arquivadas. */
+    public Resposta buscarResposta(int idResposta) {
+        try {
+            return respostas.read(idResposta);
+        } catch (Exception e) {
+            throw falha("ler resposta", e);
+        }
+    }
+
+    /**
+     * Atualiza os campos mutáveis da resposta (nota, avaliações e estado).
+     * Os IDs de pergunta e usuário são imutáveis no modelo.
+     */
+    public void atualizarResposta(Resposta resposta) {
+        if (resposta == null) {
+            throw new IllegalArgumentException("Resposta inválida.");
+        }
+
+        try {
+            if (respostas.read(resposta.getIdResposta()) == null
+                    || !respostas.update(resposta)) {
+                throw new IllegalArgumentException("Resposta não encontrada.");
+            }
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception e) {
+            throw falha("atualizar resposta", e);
+        }
+    }
+
+    /**
+     * Arquiva uma resposta sem apagar o registro. A ação é permitida ao autor
+     * da resposta ou ao autor da pergunta associada.
+     */
+    public void arquivarResposta(int idResposta, int idUsuarioSolicitante) {
+        try {
+            Resposta resposta = respostas.read(idResposta);
+            if (resposta == null || !resposta.isAtiva()) {
+                throw new IllegalArgumentException("Resposta não encontrada.");
+            }
+
+            Pergunta pergunta = perguntas.read(resposta.getIdPergunta());
+            boolean autorDaResposta = resposta.getIdUsuario() == idUsuarioSolicitante;
+            boolean autorDaPergunta = pergunta != null
+                    && pergunta.getIdUsuario() == idUsuarioSolicitante;
+            if (!autorDaResposta && !autorDaPergunta) {
+                throw new IllegalArgumentException(
+                        "Sem permissão para arquivar esta resposta.");
+            }
+
+            resposta.setAtiva(false);
+            if (!respostas.update(resposta)) {
+                throw new IllegalArgumentException("Resposta não encontrada.");
+            }
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception e) {
+            throw falha("arquivar resposta", e);
+        }
+    }
+
+    /** Lista as respostas ativas de uma pergunta, por nota decrescente. */
+    public List<Resposta> respostasDaPergunta(int idPergunta) {
+        try {
+            List<Resposta> lista = new ArrayList<>();
+            for (ParIdId par : indiceRespostasPorPergunta.read(new ParIdId(idPergunta))) {
+                Resposta resposta = respostas.read(par.getId2());
+                if (resposta != null && resposta.isAtiva()) {
+                    lista.add(resposta);
+                }
+            }
+            lista.sort(Comparator.comparingInt(Resposta::getNota).reversed()
+                    .thenComparingLong(Resposta::getCriacao)
+                    .thenComparingInt(Resposta::getIdResposta));
+            return lista;
+        } catch (Exception e) {
+            throw falha("listar respostas da pergunta", e);
+        }
+    }
+
+    /** Lista as respostas ativas criadas por um usuário. */
+    public List<Resposta> respostasDoUsuario(int idUsuario) {
+        try {
+            List<Resposta> lista = new ArrayList<>();
+            for (ParIdId par : indiceRespostasPorUsuario.read(new ParIdId(idUsuario))) {
+                Resposta resposta = respostas.read(par.getId2());
+                if (resposta != null && resposta.isAtiva()) {
+                    lista.add(resposta);
+                }
+            }
+            lista.sort(Comparator.comparingLong(Resposta::getCriacao)
+                    .thenComparingInt(Resposta::getIdResposta));
+            return lista;
+        } catch (Exception e) {
+            throw falha("listar respostas do usuário", e);
+        }
+    }
+
     public void excluirPergunta(int idPergunta) {
         try {
             Pergunta pergunta = perguntas.read(idPergunta);
@@ -277,6 +428,18 @@ public class BancoDados implements AutoCloseable {
                         new ParDataId(pergunta.getCriacao(), pergunta.getIdPergunta()));
             }
         }
+        if (indiceRespostasPorPergunta.empty()) {
+            for (Resposta resposta : respostas.readAll()) {
+                indiceRespostasPorPergunta.create(
+                        new ParIdId(resposta.getIdPergunta(), resposta.getIdResposta()));
+            }
+        }
+        if (indiceRespostasPorUsuario.empty()) {
+            for (Resposta resposta : respostas.readAll()) {
+                indiceRespostasPorUsuario.create(
+                        new ParIdId(resposta.getIdUsuario(), resposta.getIdResposta()));
+            }
+        }
     }
 
     public static String normalizarEmail(String email) {
@@ -295,7 +458,11 @@ public class BancoDados implements AutoCloseable {
             try {
                 perguntas.close();
             } finally {
-                indicePalavrasChave.close();
+                try {
+                    respostas.close();
+                } finally {
+                    indicePalavrasChave.close();
+                }
             }
         }
     }
