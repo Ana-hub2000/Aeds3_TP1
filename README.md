@@ -343,6 +343,5 @@ Na consulta, nós usamos `IndicePalavrasChave.buscar` para recuperar `lista.read
 
 ### 11.2 Vídeo de demonstração (TP3)
 
-- **Link do Vídeo:** [INSERIR LINK DO VÍDEO DO TP3 AQUI]
 
 Nós podemos demonstrar a opção **Buscar perguntas → B**, consultar palavras com acentos e mostrar a ordem dos resultados. Para explicar o código, nós mostramos `TratamentoTexto.palavrasValidas`, o trecho `read/create/update` de `IndicePalavrasChave.incluir` e o cálculo de IDF com a ordenação em `IndicePalavrasChave.buscar`.
