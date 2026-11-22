@@ -13,8 +13,9 @@
 
 - **Turma:** (8203100) Algoritmos e Estruturas de Dados III
 - **Professor:** Marcos André Silveira Kutova
-- **Repositório do projeto:** link ainda não informado; inserir a URL do repositório exclusivo do Ajuda Aí antes da entrega.
-- **Vídeo de demonstração (TP3):** link informado na seção 10.10.
+
+> [!WARNING]
+> Os vídeos de demonstração dos trabalhos estão disponíveis no [Link de acesso](https://drive.google.com/drive/folders/1s5ropjmS-4gWvFPJlbXJhS0a4EiIGgDG?usp=sharing)
 
 ## 1. Descrição do trabalho
 
@@ -258,10 +259,6 @@ Nesta segunda etapa, o Ajuda Aí 1.0 evoluiu para suportar o relacionamento N:N 
 
 **Pendente de confirmação pela equipe.** Verificar a integridade do vínculo resposta–avaliação em criação, alteração, arquivamento e exclusão, e justificar.
 
-### 9.3 Vídeo de demonstração (TP2)
-
-- **Link do vídeo:** ainda não informado; inserir o link da demonstração do TP2 antes da entrega.
-
 ---
 
 ## 10. Trabalho Prático 3 — Índice Invertido e Busca por Palavras-Chave
@@ -504,13 +501,7 @@ O checklist abaixo reproduz as perguntas do enunciado. Os itens identificados co
 
 **Sim, conforme declaração da equipe.** O projeto utiliza estruturas disponibilizadas pelo professor, como `ListaInvertida` e `ElementoLista`, e contém classes desenvolvidas pela equipe, como `TratamentoTexto` e `IndicePalavrasChave`, além das adaptações realizadas em `BancoDados` e na interface. A confirmação de originalidade é uma declaração dos integrantes do grupo.
 
-### 10.10 Vídeo de demonstração (TP3)
-
-- **Duração máxima:** 5 minutos.
-- **Formato:** captura de tela com narração em áudio.
-- **Link do vídeo:** [\[LINK DO VÍDEO DO TP3 AQUI\]](https://drive.google.com/file/d/1C5jlPWuasQ-vn9RfPxhBnsYRNIajCdxA/view?usp=sharing)
-
-### 10.11 Instruções para execução
+### 10.10 Instruções para execução
 
 Na pasta do projeto que contém o `pom.xml`, os comandos registrados na documentação anterior são:
 
